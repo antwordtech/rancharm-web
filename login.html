@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm Log In</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="styles.css?v=2">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+  var meta = document.getElementById('metaTheme');
+  if (meta) {
+    var isDark = document.documentElement.classList.contains('theme-dark') ||
+      (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    meta.setAttribute('content', isDark ? '#0b1210' : '#0f9d8c');
+  }
+})();
+</script>
+<script src="toast.js?v=2"></script>
+</head>
+<body>
+<div class="page-loader" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>
+<div class="center-page">
+  <div class="plain-auth">
+    <dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;margin:0 auto;display:block;" autoplay loop></dotlottie-wc>
+<div class="logo">Ranch<span>arm</span></div>
+    <div class="tagline">Grow your ranch. Earn real rewards.</div>
+
+    <!-- LOGIN MODE -->
+    <div id="loginBlock">
+      <input type="email" id="loginEmail" placeholder="Email address">
+      <input type="password" id="loginPassword" placeholder="Password">
+      <button id="loginBtn" onclick="doLogin()">Log In</button>
+      <div class="divider">or</div>
+      <button class="btn-outline" id="googleBtn" onclick="googleLogin()"><i class="fa-brands fa-google"></i> Continue with Google</button>
+      <div class="toggle-text">Don't have an account? <span onclick="switchMode('signup')" class="link">Sign up</span></div>
+    </div>
+
+    <!-- SIGNUP MODE — STEP 1 -->
+    <div id="signupStep1" style="display:none">
+      <div class="step-dots"><div class="step-dot active"></div><div class="step-dot"></div></div>
+      <input type="email" id="signupEmail" placeholder="Email address">
+      <input type="password" id="signupPassword" placeholder="Password (min 6 characters)">
+      <button onclick="goToStep2()">Next</button>
+      <div class="divider">or</div>
+      <button class="btn-outline" onclick="googleLogin()"><i class="fa-brands fa-google"></i> Continue with Google</button>
+      <div class="toggle-text">Already have an account? <span onclick="switchMode('login')" class="link">Log in</span></div>
+    </div>
+
+    <!-- SIGNUP MODE — STEP 2 -->
+    <div id="signupStep2" style="display:none">
+      <div class="step-dots"><div class="step-dot"></div><div class="step-dot active"></div></div>
+      <input type="tel" id="signupPhone" placeholder="Phone number">
+      <div class="field-hint">Required for account verification</div>
+      <input type="text" id="signupReferral" placeholder="Referral code (optional)">
+      <button id="createAccountBtn" onclick="completeSignup()">Create Account</button>
+      <div class="step-back" onclick="backToStep1()">← Back</div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, createUserProfile, getUserProfile } from './firebase-config.js?v=3';
+  import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('ref')) {
+    sessionStorage.setItem('pendingReferralCode', params.get('ref').trim());
+  }
+
+  let redirecting = false;
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { document.body.classList.add('ready'); return; }
+    if (redirecting) return;
+    redirecting = true;
+
+    const profile = await getUserProfile(user.uid);
+    window.location.href = profile ? 'dashboard.html' : 'complete-profile.html';
+  });
+
+  window.switchMode = (mode) => {
+    document.getElementById('loginBlock').style.display = mode === 'login' ? 'block' : 'none';
+    document.getElementById('signupStep1').style.display = mode === 'signup' ? 'block' : 'none';
+    document.getElementById('signupStep2').style.display = 'none';
+  };
+
+  window.goToStep2 = () => {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    if (!email || !password) { toast('Enter both email and password', 'error'); return; }
+    if (password.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+    document.getElementById('signupStep1').style.display = 'none';
+    document.getElementById('signupStep2').style.display = 'block';
+  };
+
+  window.backToStep1 = () => {
+    document.getElementById('signupStep2').style.display = 'none';
+    document.getElementById('signupStep1').style.display = 'block';
+  };
+
+  function setLoading(btn, text) {
+    btn.dataset.original = btn.innerHTML;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${text}`;
+    btn.classList.add('btn-loading');
+  }
+  function clearLoading(btn) {
+    btn.innerHTML = btn.dataset.original;
+    btn.classList.remove('btn-loading');
+  }
+
+  window.doLogin = async () => {
+    const email = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { toast('Enter both email and password', 'error'); return; }
+
+    const btn = document.getElementById('loginBtn');
+    setLoading(btn, 'Logging in...');
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      clearLoading(btn);
+      toast(error.message, 'error');
+    }
+  };
+
+  window.completeSignup = async () => {
+    const email = document.getElementById('signupEmail').value.trim();
+    const password = document.getElementById('signupPassword').value;
+    const phone = document.getElementById('signupPhone').value.trim();
+    const referral = document.getElementById('signupReferral').value.trim();
+
+    if (!phone) { toast('Phone number is required', 'error'); return; }
+
+    const btn = document.getElementById('createAccountBtn');
+    setLoading(btn, 'Creating account...');
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await createUserProfile(cred.user, phone, referral);
+      window.location.href = 'dashboard.html';
+    } catch (error) {
+      clearLoading(btn);
+      toast(error.message, 'error');
+    }
+  };
+
+  window.googleLogin = async () => {
+    const btn = document.getElementById('googleBtn') || event.target.closest('button');
+    setLoading(btn, 'Connecting...');
+    try {
+      await signInWithPopup(auth, new GoogleAuthProvider());
+    } catch (error) {
+      clearLoading(btn);
+      toast(error.message, 'error');
+    }
+  };
+</script>
+</body>
+</html>

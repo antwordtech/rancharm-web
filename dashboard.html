@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+function syncThemeColor(){
+  var meta = document.getElementById('metaTheme');
+  if (!meta) return;
+  var isDark = document.documentElement.classList.contains('theme-dark') ||
+    (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  meta.setAttribute('content', isDark ? '#0b1210' : '#0f9d8c');
+}
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+  syncThemeColor();
+})();
+window.toggleTheme = function() {
+  var html = document.documentElement;
+  var isDark = html.classList.contains('theme-dark');
+  html.classList.remove('theme-dark','theme-light');
+  if (isDark) { html.classList.add('theme-light'); localStorage.setItem('rancharm-theme','light'); }
+  else { html.classList.add('theme-dark'); localStorage.setItem('rancharm-theme','dark'); }
+  syncThemeSwitch();
+  syncThemeColor();
+};
+function syncThemeSwitch(){
+  var sw = document.getElementById('themeSwitch');
+  if (!sw) return;
+  var isDark = document.documentElement.classList.contains('theme-dark') ||
+    (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  sw.classList.toggle('on', isDark);
+}
+document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syncThemeColor(); });
+</script>
+<script src="toast.js?v=2"></script>
+</head>
+<body>
+<div class="page-loader page-loader-app" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="openDrawer()"><i class="fa-solid fa-bars"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <a class="icon-btn" href="https://whatsapp.com/channel/0029VbDYtgnDuMRX0yFQVo1h" target="_blank" rel="noopener" style="text-decoration:none;"><i class="fa-brands fa-whatsapp"></i></a>
+  </div>
+</div>
+
+<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawerPanel">
+  <div class="drawer-header">
+    <div class="drawer-avatar" id="drawerAvatar">?</div>
+    <div>
+      <div class="drawer-email" id="drawerEmail">...</div>
+      <div class="drawer-tier" id="drawerTier">...</div>
+    </div>
+  </div>
+  <a class="drawer-link active" href="dashboard.html"><i class="fa-solid fa-house"></i>Home</a>
+  <a class="drawer-link" href="ranch-store.html"><i class="fa-solid fa-store"></i>Store</a>
+  <a class="drawer-link" href="my-ranch.html"><i class="fa-solid fa-paw"></i>My Ranch</a>
+  <a class="drawer-link" href="tasks.html"><i class="fa-solid fa-list-check"></i>Tasks</a>
+  <a class="drawer-link" href="referrals.html"><i class="fa-solid fa-user-group"></i>Referrals</a>
+  <a class="drawer-link" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+  <a class="drawer-link" href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i>Leaderboard</a>
+  <a class="drawer-link" href="marketplace.html"><i class="fa-solid fa-fire"></i>Marketplace</a>
+  <a class="drawer-link" href="subscription.html"><i class="fa-solid fa-crown"></i>Subscription</a>
+
+  <div class="drawer-link" style="cursor:pointer;" onclick="toggleTheme()">
+    <i class="fa-solid fa-circle-half-stroke"></i>
+    <span style="flex:1;">Dark Mode</span>
+    <span class="theme-switch" id="themeSwitch"><span class="theme-switch-knob"></span></span>
+  </div>
+  <a class="drawer-link" href="#" onclick="toast('Withdrawals coming soon'); return false;"><i class="fa-solid fa-arrow-up-from-bracket"></i>Withdraw</a>
+
+  <div class="drawer-footer">
+    <div class="drawer-link" style="cursor:pointer;" onclick="confirmLogout()">
+      <i class="fa-solid fa-right-from-bracket" style="background:rgba(244,63,94,0.1);color:#f43f5e;"></i>
+      <span style="color:#f43f5e;">Log Out</span>
+    </div>
+  </div>
+</div>
+
+<div class="logout-modal-backdrop" id="logoutModalBackdrop" onclick="closeLogoutModal(event)">
+  <div class="logout-modal" onclick="event.stopPropagation()">
+    <div class="logout-modal-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+    <div class="logout-modal-title">Log Out?</div>
+    <div class="logout-modal-text">Are you sure you want to log out of Rancharm?</div>
+    <div class="logout-modal-actions">
+      <button class="btn-outline" onclick="closeLogoutModal()">Cancel</button>
+      <button class="btn-danger" onclick="doLogout()">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="wallet-card-v3 reveal">
+    <div class="wallet-top-row">
+      <div class="wallet-label"><i class="fa-solid fa-wallet"></i> Ranch Balance</div>
+      <button class="wallet-eye-btn" onclick="toggleBalanceVisibility()"><i class="fa-solid fa-eye" id="eyeIcon"></i></button>
+    </div>
+    <div class="wallet-balance-v3"><span id="coinsDisplay">0</span><span class="wallet-currency">Coins</span></div>
+  </div>
+
+  <div class="stat-tiles">
+    <div class="stat-tile reveal" style="animation-delay:0.05s">
+      <div class="stat-tile-icon"><i class="fa-solid fa-star"></i></div>
+      <div class="stat-tile-value" id="pointsDisplay">0</div>
+      <div class="stat-tile-label">Points</div>
+    </div>
+    <div class="stat-tile reveal" style="animation-delay:0.1s">
+      <div class="stat-tile-icon"><i class="fa-solid fa-paw"></i></div>
+      <div class="stat-tile-value" id="tierDisplay">Cock</div>
+      <div class="stat-tile-label">Ranch Level</div>
+    </div>
+  </div>
+
+  <div class="section-title">Explore</div>
+  <div class="nav-grid">
+    <a class="nav-tile reveal" style="animation-delay:0.15s" href="ranch-store.html"><i class="fa-solid fa-store" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>Ranch Store</a>
+    <a class="nav-tile reveal" style="animation-delay:0.2s" href="my-ranch.html"><i class="fa-solid fa-paw" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>My Ranch</a>
+    <a class="nav-tile reveal" style="animation-delay:0.25s" href="tasks.html"><i class="fa-solid fa-list-check" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>Tasks</a>
+    <a class="nav-tile reveal" style="animation-delay:0.3s" href="marketplace.html"><i class="fa-solid fa-fire" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>Marketplace</a>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, getUserProfile, getOrCreateWallet, ANIMALS } from './firebase-config.js?v=3';
+  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  window.openDrawer = () => {
+    document.getElementById('drawerBackdrop').classList.add('open');
+    document.getElementById('drawerPanel').classList.add('open');
+    document.body.classList.add('drawer-open');
+  };
+  window.closeDrawer = () => {
+    document.getElementById('drawerBackdrop').classList.remove('open');
+    document.getElementById('drawerPanel').classList.remove('open');
+    document.body.classList.remove('drawer-open');
+  };
+  window.confirmLogout = () => {
+    document.getElementById('logoutModalBackdrop').classList.add('open');
+  };
+  window.closeLogoutModal = (e) => {
+    if (e && e.target !== e.currentTarget) return;
+    document.getElementById('logoutModalBackdrop').classList.remove('open');
+  };
+  window.doLogout = async () => {
+    await signOut(auth);
+    window.location.href = 'login.html';
+  };
+
+  let balanceHidden = false;
+  let lastCoins = 0;
+  window.toggleBalanceVisibility = () => {
+    balanceHidden = !balanceHidden;
+    document.getElementById('coinsDisplay').textContent = balanceHidden ? '••••' : lastCoins.toLocaleString();
+    document.getElementById('eyeIcon').className = balanceHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+  };
+
+  function animateNumber(elId, target) {
+    const el = document.getElementById(elId);
+    let current = 0;
+    const step = Math.max(1, Math.ceil(target / 30));
+    const interval = setInterval(() => {
+      current = Math.min(current + step, target);
+      el.textContent = current.toLocaleString();
+      if (current >= target) clearInterval(interval);
+    }, 20);
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = 'login.html'; return; }
+
+    const [profile, wallet] = await Promise.all([getUserProfile(user.uid), getOrCreateWallet(user)]);
+    if (!profile) { window.location.href = 'complete-profile.html'; return; }
+
+    lastCoins = wallet.coins;
+    const tierKey = profile.animalTier || "cock";
+    const animal = ANIMALS.find(a => a.key === tierKey);
+    const initial = (user.email || '?').charAt(0).toUpperCase();
+
+    document.getElementById('tierDisplay').textContent = animal.name;
+    document.getElementById('drawerAvatar').textContent = initial;
+    document.getElementById('drawerEmail').textContent = user.email || '...';
+    document.getElementById('drawerTier').textContent = animal.name + ' · Ranch Level';
+
+    document.body.classList.add('ready');
+
+    animateNumber('pointsDisplay', wallet.points);
+    animateNumber('coinsDisplay', wallet.coins);
+  });
+</script>
+</body>
+</html>

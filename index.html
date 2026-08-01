@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c">
+<title>Rancharm: Grow Your Ranch, Earn Real Rewards</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    var isDark = document.documentElement.classList.contains('theme-dark') ||
+      (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    meta.setAttribute('content', isDark ? '#0b1210' : '#0f9d8c');
+  }
+})();
+</script>
+</head>
+<body class="ready" style="padding-bottom:40px;">
+
+<div class="page" style="padding-top:32px;">
+  <div style="text-align:center;">
+    <dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:120px;height:120px;margin:0 auto;display:block;" autoplay loop></dotlottie-wc>
+    <div class="logo">Ranch<span>arm</span></div>
+    <div class="tagline" style="margin-bottom:28px;">Grow your ranch. Earn real rewards.</div>
+    <div style="display:flex;flex-direction:column;gap:12px;width:min(90%,340px);margin:0 auto;">
+      <button onclick="location.href='login'">Get Started Free</button>
+      <button class="btn-outline" onclick="location.href='login'">Log In</button>
+    </div>
+  </div>
+
+  <div class="section-title" style="text-align:center;margin-top:24px;">How Rancharm Works</div>
+
+  <div class="task-card reveal" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="drawer-avatar" style="width:38px;height:38px;font-size:15px;flex-shrink:0;">1</div>
+      <div>
+        <div class="task-title">Get your free Cock</div>
+        <div class="task-desc">Sign up and receive your first Ranch animal, free with no payment needed.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-card reveal" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="drawer-avatar" style="width:38px;height:38px;font-size:15px;flex-shrink:0;">2</div>
+      <div>
+        <div class="task-title">Feed your animal daily</div>
+        <div class="task-desc">Every animal earns Points each day you feed it. The bigger the animal, the bigger the reward.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-card reveal" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="drawer-avatar" style="width:38px;height:38px;font-size:15px;flex-shrink:0;">3</div>
+      <div>
+        <div class="task-title">Upgrade your Ranch Level</div>
+        <div class="task-desc">Buy a higher-tier animal in the Ranch Store to unlock bigger daily earnings.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="task-card reveal" style="margin-bottom:12px;">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="drawer-avatar" style="width:38px;height:38px;font-size:15px;flex-shrink:0;">4</div>
+      <div>
+        <div class="task-title">Build your team</div>
+        <div class="task-desc">Invite friends with your referral link and earn Points for every person who joins.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title" style="text-align:center;margin-top:24px;">Meet the Ranch</div>
+  <div class="animal-grid" id="landingAnimalGrid" style="margin-bottom:24px;">
+    <div class="skeleton" style="height:150px;"></div>
+    <div class="skeleton" style="height:150px;"></div>
+    <div class="skeleton" style="height:150px;"></div>
+    <div class="skeleton" style="height:150px;"></div>
+  </div>
+
+  <div style="text-align:center;">
+    <div style="width:min(90%,340px);margin:8px auto 40px;">
+      <button onclick="location.href='login'">Create Free Account</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { ANIMALS } from './firebase-config.js?v=3';
+
+  const previewKeys = ['cock', 'duck', 'fox', 'horse'];
+  const grid = document.getElementById('landingAnimalGrid');
+  grid.innerHTML = '';
+
+  ANIMALS.filter(function(a) { return previewKeys.includes(a.key); }).forEach(function(animal, i) {
+    const initial = animal.name.charAt(0);
+    const avatarHtml = animal.lottie
+      ? '<dotlottie-wc src="' + animal.lottie + '" autoplay loop style="width:56px;height:56px;"></dotlottie-wc>'
+      : initial;
+    const card = document.createElement('div');
+    card.className = 'animal-card reveal';
+    card.style.animationDelay = (i * 0.05) + 's';
+    card.innerHTML =
+      '<div class="animal-avatar" style="' + (animal.lottie ? 'background:none;' : '') + '">' + avatarHtml + '</div>' +
+      '<div class="animal-name">' + animal.name + '</div>' +
+      '<div class="animal-tier">' + animal.tier + '</div>' +
+      '<div class="animal-price" style="color:var(--brand-dark);">' + animal.dailyPoints.toLocaleString() + ' pts/day</div>';
+    grid.appendChild(card);
+  });
+</script>
+</body>
+</html>
