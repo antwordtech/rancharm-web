@@ -91,6 +91,22 @@ window.addEventListener('unhandledrejection', function(e) {
   import { auth, createUserProfile, getUserProfile } from './firebase-config.js?v=3';
   import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
+  function getFriendlyAuthError(error) {
+    const code = error && error.code ? error.code : '';
+    const map = {
+      'auth/invalid-credential': 'Incorrect email or password. Please try again.',
+      'auth/wrong-password': 'Incorrect email or password. Please try again.',
+      'auth/user-not-found': 'No account found with this email.',
+      'auth/email-already-in-use': 'An account with this email already exists. Try logging in instead.',
+      'auth/weak-password': 'Please choose a stronger password (at least 6 characters).',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+      'auth/network-request-failed': 'Network error. Please check your internet connection.',
+      'auth/popup-closed-by-user': 'Sign-in was cancelled.',
+    };
+    return map[code] || 'Something went wrong. Please try again.';
+  }
+
   const params = new URLSearchParams(window.location.search);
   if (params.has('ref')) {
     sessionStorage.setItem('pendingReferralCode', params.get('ref').trim());
@@ -148,7 +164,7 @@ window.addEventListener('unhandledrejection', function(e) {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       clearLoading(btn);
-      toast(error.message, 'error');
+      toast(getFriendlyAuthError(error), 'error');
     }
   };
 
@@ -169,7 +185,7 @@ window.addEventListener('unhandledrejection', function(e) {
       window.location.href = 'dashboard.html';
     } catch (error) {
       clearLoading(btn);
-      toast(error.message, 'error');
+      toast(getFriendlyAuthError(error), 'error');
     }
   };
 
@@ -180,7 +196,7 @@ window.addEventListener('unhandledrejection', function(e) {
       await signInWithPopup(auth, new GoogleAuthProvider());
     } catch (error) {
       clearLoading(btn);
-      toast(error.message, 'error');
+      toast(getFriendlyAuthError(error), 'error');
     }
   };
 </script>
