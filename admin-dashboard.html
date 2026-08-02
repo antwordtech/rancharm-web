@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#0f9d8c" id="metaTheme">
-<title>Rancharm Complete Your Profile</title>
+<title>Rancharm Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 <link rel="stylesheet" href="styles.css?v=2">
@@ -13,12 +13,6 @@
   var t = localStorage.getItem('rancharm-theme');
   if (t === 'dark') document.documentElement.classList.add('theme-dark');
   else if (t === 'light') document.documentElement.classList.add('theme-light');
-  var meta = document.getElementById('metaTheme');
-  if (meta) {
-    var isDark = document.documentElement.classList.contains('theme-dark') ||
-      (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    meta.setAttribute('content', isDark ? '#0b1210' : '#0f9d8c');
-  }
 })();
 </script>
 <script src="toast.js?v=2"></script>
@@ -46,52 +40,48 @@ window.addEventListener('unhandledrejection', function(e) {
 
 </head>
 <body>
-<div class="page-loader" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>
-<div class="center-page">
-  <div class="plain-auth">
-    <div class="logo">Ranch<span>arm</span></div>
-    <div class="tagline">One last step: complete your profile</div>
+<div class="page-loader page-loader-app" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>
 
-    <input type="tel" id="phoneInput" placeholder="Phone number">
-    <div class="field-hint">Required for account verification</div>
-    <input type="text" id="referralInput" placeholder="Referral code (optional)">
-    <button id="continueBtn" onclick="finishProfile()">Continue</button>
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <div style="width:40px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="section-title" style="margin-top:0">Admin Panel</div>
+  <div class="nav-grid">
+    <a class="nav-tile reveal" href="admin-kyc.html">
+      <i class="fa-solid fa-id-card" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>
+      KYC Approvals
+      <div id="kycPendingCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
+    </a>
+    <a class="nav-tile reveal" style="animation-delay:0.05s" href="admin-tasks.html">
+      <i class="fa-solid fa-list-check" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>
+      Manage Tasks
+      <div id="taskCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
+    </a>
   </div>
 </div>
 
 <script type="module">
-  import { auth, createUserProfile, getUserProfile } from './firebase-config.js?v=3';
+  import { auth, db, isAdmin, collection, query, where, getDocs } from './firebase-config.js?v=3';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
-    const profile = await getUserProfile(user.uid);
-    if (profile) { window.location.href = 'dashboard.html'; return; }
+    if (!isAdmin(user)) { window.location.href = 'dashboard.html'; return; }
 
-    const pending = sessionStorage.getItem('pendingReferralCode');
-    if (pending) document.getElementById('referralInput').value = pending;
+    const pendingSnap = await getDocs(query(collection(db, "kyc"), where("status", "==", "pending")));
+    document.getElementById('kycPendingCount').textContent = pendingSnap.size + ' pending';
+
+    const tasksSnap = await getDocs(collection(db, "tasks"));
+    document.getElementById('taskCount').textContent = tasksSnap.size + ' total';
 
     document.body.classList.add('ready');
   });
-
-  window.finishProfile = async () => {
-    const phone = document.getElementById('phoneInput').value.trim();
-    const referral = document.getElementById('referralInput').value.trim();
-    if (!phone) { toast('Phone number is required', 'error'); return; }
-
-    const btn = document.getElementById('continueBtn');
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-    btn.classList.add('btn-loading');
-
-    try {
-      await createUserProfile(auth.currentUser, phone, referral);
-      window.location.href = 'dashboard.html';
-    } catch (error) {
-      btn.innerHTML = 'Continue';
-      btn.classList.remove('btn-loading');
-      toast(error.message, 'error');
-    }
-  };
 </script>
 </body>
 </html>

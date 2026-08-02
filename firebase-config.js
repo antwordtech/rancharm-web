@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, increment, arrayUnion, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
@@ -16,6 +16,19 @@ export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+export const ADMIN_EMAIL = "antwordtech@gmail.com";
+export function isAdmin(user) {
+  return !!user && user.email === ADMIN_EMAIL;
+}
+
+export function getTeamLevel(teamCount) {
+  const count = teamCount || 0;
+  if (count >= 200) return { title: "Ranch Master", next: null, current: 200 };
+  if (count >= 50) return { title: "Ranch Leader", next: 200, current: 50 };
+  if (count >= 10) return { title: "Ranch Manager", next: 50, current: 10 };
+  return { title: "Member", next: 10, current: 0 };
+}
 
 export const ANIMALS = [
   { key: "cock",   name: "Cock",   price: 0,    tier: "Starter",  dailyPoints: 50,   image: null, lottie: "https://lottie.host/596eb98d-85c0-4779-b3e1-5e8db56a494f/zj1yYMqMHa.json", benefits: ["Basic tasks", "Basic rewards", "Beginner access", "Starter Team"], teamCapacity: 0 },
@@ -125,4 +138,4 @@ export async function submitKYC(user, { mobileMoneyNumber, registeredName, idTyp
   await updateDoc(doc(db, "users", user.uid), { kycStatus: "pending" });
 }
 
-export { doc, getDoc, setDoc, updateDoc, increment, arrayUnion, collection, query, where, getDocs, orderBy, limit };
+export { doc, getDoc, setDoc, updateDoc, deleteDoc, addDoc, increment, arrayUnion, collection, query, where, getDocs, orderBy, limit };

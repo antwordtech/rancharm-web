@@ -41,6 +41,28 @@ function syncThemeSwitch(){
 document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syncThemeColor(); });
 </script>
 <script src="toast.js?v=2"></script>
+<script>
+function showPageError(msg) {
+  console.error('Page error:', msg);
+  var loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+    '<i class="fa-solid fa-cloud-arrow-down" style="font-size:32px;color:var(--brand);margin-bottom:14px;display:block;"></i>' +
+    '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">Having Trouble Loading</div>' +
+    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Check your internet connection and try again.</div>' +
+    '<button onclick="location.reload()" style="width:auto;padding:10px 20px;">Retry</button></div>';
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+window.addEventListener('error', function(e) {
+  showPageError((e.message || 'Unknown error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason);
+  showPageError(msg);
+});
+</script>
+
 </head>
 <body>
 <div class="page-loader page-loader-app" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>
@@ -71,6 +93,7 @@ document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syn
   <a class="drawer-link" href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i>Leaderboard</a>
   <a class="drawer-link" href="marketplace.html"><i class="fa-solid fa-fire"></i>Marketplace</a>
   <a class="drawer-link" href="subscription.html"><i class="fa-solid fa-crown"></i>Subscription</a>
+  <a class="drawer-link" href="admin-dashboard.html" id="adminLink" style="display:none;"><i class="fa-solid fa-shield-halved"></i>Admin</a>
 
   <div class="drawer-link" style="cursor:pointer;" onclick="toggleTheme()">
     <i class="fa-solid fa-circle-half-stroke"></i>
@@ -131,7 +154,7 @@ document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syn
 </div>
 
 <script type="module">
-  import { auth, getUserProfile, getOrCreateWallet, ANIMALS } from './firebase-config.js?v=3';
+  import { auth, getUserProfile, getOrCreateWallet, isAdmin, ANIMALS } from './firebase-config.js?v=3';
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   window.openDrawer = () => {
@@ -190,6 +213,8 @@ document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syn
     document.getElementById('drawerAvatar').textContent = initial;
     document.getElementById('drawerEmail').textContent = user.email || '...';
     document.getElementById('drawerTier').textContent = animal.name + ' · Ranch Level';
+
+    if (isAdmin(user)) { document.getElementById('adminLink').style.display = 'flex'; }
 
     document.body.classList.add('ready');
 
