@@ -66,7 +66,7 @@ window.addEventListener('unhandledrejection', function(e) {
     </div>
 
     <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Mobile Money Number</label>
-    <input type="tel" id="payPhone" placeholder="e.g. 0594401046">
+    <input type="tel" id="payPhone" placeholder="Enter your number">
 
     <button id="payBtn" onclick="initiatePayment()" style="margin-top:20px;">Pay Now</button>
   </div>
@@ -82,9 +82,10 @@ window.addEventListener('unhandledrejection', function(e) {
   </div>
 
   <div id="step3" class="kyc-step" style="display:none;text-align:center;padding:40px 0;">
-    <i class="fa-solid fa-spinner fa-spin" style="font-size:36px;color:var(--brand);margin-bottom:16px;"></i>
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:36px;color:var(--brand);margin-bottom:16px;" id="processingIcon"></i>
     <div style="font-weight:800;font-size:16px;" id="processingText">Confirming your payment...</div>
-    <div style="font-size:12px;color:var(--text-dim);margin-top:8px;">This can take a moment. Please don't close this page.</div>
+    <div style="font-size:12px;color:var(--text-dim);margin-top:8px;" id="processingHint">This can take a few minutes. Please don't close this page.</div>
+    <button id="retryCheckBtn" onclick="retryCheckStatus()" style="display:none;margin-top:20px;width:auto;padding:12px 24px;">Check Again</button>
   </div>
 
   <div id="step4" class="kyc-step" style="display:none;text-align:center;padding:40px 0;">
@@ -232,7 +233,12 @@ window.addEventListener('unhandledrejection', function(e) {
 
   function pollStatus() {
     let attempts = 0;
-    const maxAttempts = 20;
+    const maxAttempts = 45;
+
+    document.getElementById('processingIcon').style.display = 'block';
+    document.getElementById('processingText').textContent = 'Confirming your payment...';
+    document.getElementById('processingHint').style.display = 'block';
+    document.getElementById('retryCheckBtn').style.display = 'none';
 
     const interval = setInterval(async function() {
       attempts++;
@@ -249,13 +255,20 @@ window.addEventListener('unhandledrejection', function(e) {
           await completePurchase();
         } else if (attempts >= maxAttempts) {
           clearInterval(interval);
-          document.getElementById('processingText').textContent = 'Payment not confirmed yet. Check back later.';
+          document.getElementById('processingIcon').style.display = 'none';
+          document.getElementById('processingText').textContent = "Still waiting on confirmation from your network.";
+          document.getElementById('processingHint').style.display = 'none';
+          document.getElementById('retryCheckBtn').style.display = 'inline-block';
         }
       } catch (e) {
         // keep trying
       }
-    }, 3000);
+    }, 4000);
   }
+
+  window.retryCheckStatus = function() {
+    pollStatus();
+  };
 
   async function completePurchase() {
     try {
