@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm Airtime</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+})();
+</script>
+<script src="toast.js?v=2"></script>
+<script>
+function showPageError(msg) {
+  console.error('Page error:', msg);
+  var loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+    '<i class="fa-solid fa-cloud-arrow-down" style="font-size:32px;color:var(--brand);margin-bottom:14px;display:block;"></i>' +
+    '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">Having Trouble Loading</div>' +
+    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Check your internet connection and try again.</div>' +
+    '<button onclick="location.reload()" style="width:auto;padding:10px 20px;">Retry</button></div>';
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+window.addEventListener('error', function(e) {
+  showPageError((e.message || 'Unknown error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason);
+  showPageError(msg);
+});
+</script>
+</head>
+<body>
+<div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="window.location.href='marketplace.html'"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <div style="width:40px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="section-title" style="margin-top:0">Buy Airtime</div>
+
+  <div class="verified-name-box" style="margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Your Points Balance</div>
+    <div class="verified-name-value" id="pointsBalance">-</div>
+  </div>
+
+  <div id="formView">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Phone Number</label>
+    <input type="tel" id="topupPhone" placeholder="Enter your number" oninput="onPhoneInput()">
+    <div style="font-size:12px;color:var(--brand-dark);font-weight:700;margin:-8px 0 16px 4px;min-height:16px;" id="networkLabel"></div>
+
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Amount (GHS)</label>
+    <input type="number" id="topupAmount" placeholder="e.g. 5" oninput="onAmountInput()">
+    <div style="font-size:12px;color:var(--text-dim);margin:-8px 0 16px 4px;min-height:16px;" id="costLabel"></div>
+
+    <button id="buyBtn" onclick="buyAirtime()">Buy Airtime</button>
+  </div>
+
+  <div id="successView" style="display:none;text-align:center;padding:40px 0;">
+    <i class="fa-solid fa-circle-check" style="font-size:48px;color:var(--brand);margin-bottom:16px;"></i>
+    <div style="font-weight:800;font-size:18px;margin-bottom:8px;">Airtime Sent!</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;" id="successText">Delivered successfully.</div>
+    <button onclick="window.location.href='marketplace.html'">Back to Marketplace</button>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, getUserProfile, getOrCreateWallet } from './firebase-config.js?v=3';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const WORKER_URL = 'https://rancharm-worker.antwordtech.workers.dev';
+  let currentUser = null;
+  let currentPoints = 0;
+  let detectedNetworkCode = null;
+
+  onAuthStateChanged(auth, async function(user) {
+    if (!user) { window.location.href = 'login.html'; return; }
+    const profile = await getUserProfile(user.uid);
+    if (!profile) { window.location.href = 'complete-profile.html'; return; }
+    currentUser = user;
+
+    const wallet = await getOrCreateWallet(user);
+    currentPoints = wallet.points || 0;
+    document.getElementById('pointsBalance').textContent = currentPoints.toLocaleString() + ' pts';
+
+    document.body.classList.add('ready');
+  });
+
+  function detectNetwork(phone) {
+    let n = phone.replace(/\s+/g, '');
+    if (n.startsWith('+233')) n = '0' + n.slice(4);
+    else if (n.startsWith('233')) n = '0' + n.slice(3);
+    const prefix = n.slice(0, 3);
+    const mtn = ['024', '025', '053', '054', '055', '059'];
+    const telecel = ['020', '050'];
+    const at = ['026', '027', '056', '057'];
+    if (mtn.includes(prefix)) return { code: 'MTN', label: 'MTN' };
+    if (telecel.includes(prefix)) return { code: 'TELECEL', label: 'Telecel' };
+    if (at.includes(prefix)) return { code: 'AT', label: 'AT' };
+    return null;
+  }
+
+  window.onPhoneInput = function() {
+    const phone = document.getElementById('topupPhone').value.trim();
+    const label = document.getElementById('networkLabel');
+    const net = detectNetwork(phone);
+    detectedNetworkCode = net ? net.code : null;
+    label.textContent = net ? net.label + ' detected' : '';
+  };
+
+  window.onAmountInput = function() {
+    const amount = parseFloat(document.getElementById('topupAmount').value);
+    const label = document.getElementById('costLabel');
+    if (!amount || amount <= 0) { label.textContent = ''; return; }
+    const cost = Math.round(amount * 100);
+    label.textContent = 'Costs ' + cost.toLocaleString() + ' points';
+  };
+
+  window.buyAirtime = async function() {
+    const phone = document.getElementById('topupPhone').value.trim();
+    const amount = document.getElementById('topupAmount').value.trim();
+
+    if (!phone || !amount || Number(amount) <= 0) { toast('Enter your number and a valid amount', 'error'); return; }
+    if (!detectedNetworkCode) { toast('Could not detect your network from this number', 'error'); return; }
+
+    const pointsCost = Math.round(Number(amount) * 100);
+    if (pointsCost > currentPoints) { toast('Insufficient points balance', 'error'); return; }
+
+    const btn = document.getElementById('buyBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+    try {
+      const res = await fetch(WORKER_URL + '/spend-airtime', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: currentUser.uid,
+          network: detectedNetworkCode,
+          phone: phone,
+          amountGHS: amount,
+          user_reference: currentUser.uid
+        })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        document.getElementById('successText').textContent = 'GHS ' + amount + ' airtime sent to ' + phone + '.';
+        document.getElementById('formView').style.display = 'none';
+        document.getElementById('successView').style.display = 'block';
+      } else if (data.error === 'Insufficient points balance') {
+        toast('Insufficient points balance', 'error');
+      } else {
+        toast(data.error || 'Something went wrong. Try again.', 'error');
+      }
+    } catch (e) {
+      toast('Something went wrong. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Buy Airtime';
+    }
+  };
+</script>
+</body>
+</html>

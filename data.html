@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm Data</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+})();
+</script>
+<script src="toast.js?v=2"></script>
+<script>
+function showPageError(msg) {
+  console.error('Page error:', msg);
+  var loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+    '<i class="fa-solid fa-cloud-arrow-down" style="font-size:32px;color:var(--brand);margin-bottom:14px;display:block;"></i>' +
+    '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">Having Trouble Loading</div>' +
+    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Check your internet connection and try again.</div>' +
+    '<button onclick="location.reload()" style="width:auto;padding:10px 20px;">Retry</button></div>';
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+window.addEventListener('error', function(e) {
+  showPageError((e.message || 'Unknown error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason);
+  showPageError(msg);
+});
+</script>
+</head>
+<body>
+<div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="headerBack()"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <div style="width:40px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="section-title" style="margin-top:0">Buy Data</div>
+
+  <div class="verified-name-box" style="margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Your Points Balance</div>
+    <div class="verified-name-value" id="pointsBalance">-</div>
+  </div>
+
+  <div class="step-dots">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+  </div>
+
+  <div id="step1" class="kyc-step">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Phone Number</label>
+    <input type="tel" id="dataPhone" placeholder="Enter your number" oninput="onPhoneInput()">
+    <div style="font-size:12px;color:var(--brand-dark);font-weight:700;margin:-8px 0 16px 4px;min-height:16px;" id="networkLabel"></div>
+
+    <button id="findBtn" onclick="findBundles()">Find Bundles</button>
+  </div>
+
+  <div id="step2" class="kyc-step" style="display:none;">
+    <div id="bundleList"></div>
+  </div>
+
+  <div id="step3" class="kyc-step" style="display:none;text-align:center;padding:40px 0;">
+    <i class="fa-solid fa-circle-check" style="font-size:48px;color:var(--brand);margin-bottom:16px;"></i>
+    <div style="font-weight:800;font-size:18px;margin-bottom:8px;">Data Sent!</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;" id="successText">Delivered successfully.</div>
+    <button onclick="window.location.href='marketplace.html'">Back to Marketplace</button>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, getUserProfile, getOrCreateWallet } from './firebase-config.js?v=3';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const WORKER_URL = 'https://rancharm-worker.antwordtech.workers.dev';
+  let currentUser = null;
+  let currentPoints = 0;
+  let detectedNetworkCode = null;
+  let currentPhone = '';
+
+  onAuthStateChanged(auth, async function(user) {
+    if (!user) { window.location.href = 'login.html'; return; }
+    const profile = await getUserProfile(user.uid);
+    if (!profile) { window.location.href = 'complete-profile.html'; return; }
+    currentUser = user;
+
+    const wallet = await getOrCreateWallet(user);
+    currentPoints = wallet.points || 0;
+    document.getElementById('pointsBalance').textContent = currentPoints.toLocaleString() + ' pts';
+
+    document.body.classList.add('ready');
+  });
+
+  function detectNetwork(phone) {
+    let n = phone.replace(/\s+/g, '');
+    if (n.startsWith('+233')) n = '0' + n.slice(4);
+    else if (n.startsWith('233')) n = '0' + n.slice(3);
+    const prefix = n.slice(0, 3);
+    const mtn = ['024', '025', '053', '054', '055', '059'];
+    const telecel = ['020', '050'];
+    const at = ['026', '027', '056', '057'];
+    if (mtn.includes(prefix)) return { code: 'MTN', label: 'MTN' };
+    if (telecel.includes(prefix)) return { code: 'TELECEL', label: 'Telecel' };
+    if (at.includes(prefix)) return { code: 'AT', label: 'AT' };
+    return null;
+  }
+
+  let currentStep = 1;
+  window.goToStep = function(n) {
+    currentStep = n;
+    [1, 2, 3].forEach(function(i) {
+      document.getElementById('step' + i).style.display = i === n ? 'block' : 'none';
+      document.getElementById('dot' + i).classList.toggle('active', i === n);
+    });
+  };
+
+  window.headerBack = function() {
+    if (currentStep === 2) {
+      goToStep(1);
+    } else {
+      window.location.href = 'marketplace.html';
+    }
+  };
+
+  window.onPhoneInput = function() {
+    const phone = document.getElementById('dataPhone').value.trim();
+    const label = document.getElementById('networkLabel');
+    const net = detectNetwork(phone);
+    detectedNetworkCode = net ? net.code : null;
+    label.textContent = net ? net.label + ' detected' : '';
+    document.getElementById('bundleList').innerHTML = '';
+  };
+
+  window.findBundles = async function() {
+    const phone = document.getElementById('dataPhone').value.trim();
+    if (!phone) { toast('Enter your phone number', 'error'); return; }
+    if (!detectedNetworkCode) { toast('Could not detect your network from this number', 'error'); return; }
+    currentPhone = phone;
+
+    const btn = document.getElementById('findBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Finding...';
+
+    try {
+      const res = await fetch(WORKER_URL + '/fricopay-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'GET', path: '/devapi/v1/data/bundles', params: { network: detectedNetworkCode, phone: phone } })
+      });
+      const data = await res.json();
+      const bundles = data.bundles || data.data || (Array.isArray(data) ? data : []);
+
+      const list = document.getElementById('bundleList');
+      if (!bundles || bundles.length === 0) {
+        list.innerHTML = '<div class="empty-note">No bundles found for this number.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      goToStep(2);
+      bundles.forEach(function(b, i) {
+        const id = b.bundle_id || b.id;
+        const name = b.display || b.name || b.title || b.description || 'Bundle';
+        const price = b.price || b.amount;
+        const item = document.createElement('div');
+        item.className = 'task-card reveal';
+        item.style.animationDelay = (i * 0.03) + 's';
+        item.innerHTML =
+          '<div><div class="task-title">' + name + '</div><div class="task-desc">GHS ' + price + ' &middot; ' + Math.round(price * 100) + ' pts</div></div>' +
+          '<button class="btn-small" data-bundle-id="' + id + '" data-bundle-price="' + price + '" onclick="buyBundleClick(this)">Buy</button>';
+        list.appendChild(item);
+      });
+    } catch (e) {
+      toast('Could not load bundles. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Find Bundles';
+    }
+  };
+
+  window.buyBundleClick = function(btn) {
+    const id = btn.dataset.bundleId;
+    const price = parseFloat(btn.dataset.bundlePrice);
+    buyBundle(id, price, btn);
+  };
+
+  async function buyBundle(bundleId, price, btn) {
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
+    const pointsCost = Math.round(price * 100);
+    if (pointsCost > currentPoints) { toast('Insufficient points balance', 'error'); if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; } return; }
+
+    try {
+      const res = await fetch(WORKER_URL + '/spend-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: currentUser.uid,
+          network: detectedNetworkCode,
+          phone: currentPhone,
+          bundle_id: bundleId,
+          amountGHS: price,
+          user_reference: currentUser.uid
+        })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        document.getElementById('successText').textContent = 'Data bundle sent to ' + currentPhone + '.';
+        goToStep(3);
+      } else if (data.error === 'Insufficient points balance') {
+        toast('Insufficient points balance', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+      } else {
+        toast(data.error || 'Something went wrong. Try again.', 'error');
+        if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+      }
+    } catch (e) {
+      toast('Something went wrong. Try again.', 'error');
+      if (btn) { btn.disabled = false; btn.innerHTML = originalHtml; }
+    }
+  }
+</script>
+</body>
+</html>
