@@ -81,7 +81,10 @@ window.addEventListener('unhandledrejection', function(e) {
   <div class="drawer-header">
     <div class="drawer-avatar" id="drawerAvatar">?</div>
     <div>
-      <div class="drawer-email" id="drawerEmail">...</div>
+      <div class="drawer-email-row">
+        <div class="drawer-email" id="drawerEmail">...</div>
+        <i class="fa-solid fa-circle-check verified-badge-icon" id="verifiedBadge" style="display:none;" title="Verified"></i>
+      </div>
       <div class="drawer-tier" id="drawerTier">...</div>
     </div>
   </div>
@@ -213,6 +216,9 @@ window.addEventListener('unhandledrejection', function(e) {
     document.getElementById('tierDisplay').textContent = animal.name;
     document.getElementById('drawerAvatar').textContent = initial;
     document.getElementById('drawerEmail').textContent = user.email || '...';
+    if (profile.subscriptionTier && profile.subscriptionTier !== 'free') {
+      document.getElementById('verifiedBadge').style.display = 'inline-block';
+    }
     document.getElementById('drawerTier').textContent = animal.name + ' · Ranch Level';
 
     if (isAdmin(user)) { document.getElementById('adminLink').style.display = 'flex'; }

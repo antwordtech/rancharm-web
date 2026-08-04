@@ -156,7 +156,7 @@ window.addEventListener('unhandledrejection', function(e) {
 </div>
 
 <script type="module">
-  import { auth, db, doc, updateDoc, increment, getUserProfile, ANIMALS } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, increment, getUserProfile, ANIMALS, getTeamLevel } from './firebase-config.js?v=3';
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   window.openDrawer = () => {
@@ -263,11 +263,14 @@ window.addEventListener('unhandledrejection', function(e) {
     const walletRef = doc(db, "wallets", currentUid);
 
     try {
+      const rankBonus = getTeamLevel(profileData.teamCount || 0).bonusPct;
+      const earnedPoints = Math.round(currentAnimal.dailyPoints * (1 + rankBonus / 100));
+
       await Promise.all([
-        updateDoc(userRef, { lastFedDate: today, totalProfit: increment(currentAnimal.dailyPoints) }),
-        updateDoc(walletRef, { points: increment(currentAnimal.dailyPoints), lastUpdated: Date.now() })
+        updateDoc(userRef, { lastFedDate: today, totalProfit: increment(earnedPoints) }),
+        updateDoc(walletRef, { points: increment(earnedPoints), lastUpdated: Date.now() })
       ]);
-      toast(`+${currentAnimal.dailyPoints} points earned!`, 'success');
+      toast(`+${earnedPoints} points earned!` + (rankBonus > 0 ? ` (${rankBonus}% team bonus)` : ''), 'success');
       profileData.lastFedDate = today;
       profileData.totalProfit = (profileData.totalProfit || 0) + currentAnimal.dailyPoints;
       await renderRanch(profileData);

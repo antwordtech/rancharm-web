@@ -499,3 +499,7 @@ body.ready .page-loader { opacity: 0; pointer-events: none; }
 .logout-modal-text { font-size: 13px; color: var(--text-dim); margin-bottom: 20px; }
 .logout-modal-actions { display: flex; gap: 10px; }
 .logout-modal-actions button { flex: 1; }
+.drawer-header > div:not(.drawer-avatar) { min-width: 0; flex: 1; }
+.drawer-email-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.drawer-email-row .drawer-email { min-width: 0; }
+.verified-badge-icon { color: var(--brand); font-size: 12px; flex-shrink: 0; }
