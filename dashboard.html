@@ -64,6 +64,15 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 </script>
 
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
 </head>
 <body>
 <div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>
@@ -108,7 +117,7 @@ window.addEventListener('unhandledrejection', function(e) {
 
   <div class="drawer-footer">
     <div class="drawer-link" style="cursor:pointer;" onclick="confirmLogout()">
-      <i class="fa-solid fa-right-from-bracket" style="background:rgba(244,63,94,0.1);color:#f43f5e;"></i>
+      <i class="fa-solid fa-person-running" style="background:rgba(244,63,94,0.1);color:#f43f5e;"></i>
       <span style="color:#f43f5e;">Log Out</span>
     </div>
   </div>
@@ -116,7 +125,7 @@ window.addEventListener('unhandledrejection', function(e) {
 
 <div class="logout-modal-backdrop" id="logoutModalBackdrop" onclick="closeLogoutModal(event)">
   <div class="logout-modal" onclick="event.stopPropagation()">
-    <div class="logout-modal-icon"><i class="fa-solid fa-right-from-bracket"></i></div>
+    <div class="logout-modal-icon"><i class="fa-solid fa-person-running"></i></div>
     <div class="logout-modal-title">Log Out?</div>
     <div class="logout-modal-text">Are you sure you want to log out of Rancharm?</div>
     <div class="logout-modal-actions">
@@ -273,7 +282,7 @@ window.addEventListener('unhandledrejection', function(e) {
     [1, 2, 3, 4, 5, 6, 7, 8].forEach(function(i) {
       document.getElementById('howDot' + i).classList.toggle('active', i === howIndex + 1);
     });
-  }, 5000);
+  }, 10000);
 
   window.openDrawer = () => {
     document.getElementById('drawerBackdrop').classList.add('open');

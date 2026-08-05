@@ -45,6 +45,15 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 </script>
 
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
 </head>
 <body>
 <div class="page-loader" id="pageLoader"><i class="fa-solid fa-spinner fa-spin" style="font-size:32px;color:var(--brand);"></i></div>

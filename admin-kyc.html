@@ -39,6 +39,15 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 </script>
 
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
 </head>
 <body>
 <div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>

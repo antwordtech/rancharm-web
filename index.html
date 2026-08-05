@@ -22,6 +22,15 @@
   }
 })();
 </script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
 </head>
 <body style="padding-bottom:40px;">
 <div class="page-loader page-loader-app" id="pageLoader" style="background:var(--bg);">
