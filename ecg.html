@@ -196,7 +196,7 @@ window.addEventListener('unhandledrejection', function(e) {
 
   window.payEcg = async function() {
     const amount = document.getElementById('ecgAmount').value.trim();
-    if (!amount || Number(amount) <= 0) { toast('Enter a valid amount', 'error'); return; }
+    if (!amount || Number(amount) < 5) { toast('Minimum top-up is GHS 5', 'error'); return; }
 
     const pointsCost = Math.round(Number(amount) * 100);
     if (pointsCost > currentPoints) { toast('Insufficient points balance', 'error'); return; }

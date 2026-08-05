@@ -186,7 +186,7 @@ window.addEventListener('unhandledrejection', function(e) {
     const amount = document.getElementById('waterAmount').value.trim();
     const email = document.getElementById('waterEmail').value.trim();
 
-    if (!amount || Number(amount) <= 0) { toast('Enter a valid amount', 'error'); return; }
+    if (!amount || Number(amount) < 1) { toast('Minimum payment is GHS 1', 'error'); return; }
     if (!email) { toast('Enter your email address', 'error'); return; }
 
     const pointsCost = Math.round(Number(amount) * 100);
