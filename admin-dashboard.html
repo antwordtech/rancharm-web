@@ -64,6 +64,11 @@ window.addEventListener('unhandledrejection', function(e) {
       Manage Tasks
       <div id="taskCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
     </a>
+    <a class="nav-tile reveal" style="animation-delay:0.1s" href="admin-withdrawals.html">
+      <i class="fa-solid fa-arrow-up-from-bracket" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>
+      Withdrawals
+      <div id="withdrawalCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
+    </a>
   </div>
 </div>
 
@@ -80,6 +85,9 @@ window.addEventListener('unhandledrejection', function(e) {
 
     const tasksSnap = await getDocs(collection(db, "tasks"));
     document.getElementById('taskCount').textContent = tasksSnap.size + ' total';
+
+    const pendingWithdrawalsSnap = await getDocs(query(collection(db, "withdrawals"), where("status", "==", "pending")));
+    document.getElementById('withdrawalCount').textContent = pendingWithdrawalsSnap.size + ' pending';
 
     document.body.classList.add('ready');
   });

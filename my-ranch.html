@@ -224,13 +224,17 @@ window.addEventListener('unhandledrejection', function(e) {
     const feedBtn = document.getElementById('feedBtn');
     const today = await getServerDate();
     const fedToday = data.lastFedDate === today;
-    const adsRequired = (tierKey === 'cock') ? 10 : 5;
+    const adsRequired = (tierKey === 'cock') ? 20 : 5;
     const adsToday = (data.adsWatchedDate === today) ? (data.adsWatchedCount || 0) : 0;
+    const isPaidSub = data.subscriptionTier && data.subscriptionTier !== 'free';
     document.getElementById('adsProgressText').textContent = adsToday + ' / ' + adsRequired + ' ads watched';
     document.getElementById('adsProgressFill').style.width = Math.min(100, (adsToday / adsRequired) * 100) + '%';
 
     const watchBtn = document.getElementById('watchAdBtn');
-    if (adsToday >= adsRequired) {
+    if (isPaidSub) {
+      watchBtn.disabled = true;
+      watchBtn.innerHTML = 'Ads Removed';
+    } else if (adsToday >= adsRequired) {
       watchBtn.disabled = true;
       watchBtn.innerHTML = 'All Ads Watched Today';
     } else {
@@ -242,7 +246,7 @@ window.addEventListener('unhandledrejection', function(e) {
     if (fedToday) {
       feedBtn.disabled = true;
       feedBtn.innerHTML = 'Already Fed Today';
-    } else if (adsToday < adsRequired) {
+    } else if (!isPaidSub && adsToday < adsRequired) {
       feedBtn.disabled = true;
       feedBtn.innerHTML = 'Watch ' + adsRequired + ' Ads First';
     } else {

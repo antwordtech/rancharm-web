@@ -164,7 +164,7 @@ window.addEventListener('unhandledrejection', function(e) {
 </div>
 
 <script type="module">
-  import { auth, getUserProfile, ANIMALS, getTeamLevel } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, getUserProfile, ANIMALS, getTeamLevel } from './firebase-config.js?v=3';
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   window.openDrawer = () => {
@@ -204,6 +204,10 @@ window.addEventListener('unhandledrejection', function(e) {
     document.getElementById('drawerEmail').textContent = user.email || '...';
     document.getElementById('drawerTier').textContent = animal.name + ' · Ranch Level';
 
+    if (!profile.referralCode) {
+      profile.referralCode = user.uid.substring(0, 8).toUpperCase();
+      await updateDoc(doc(db, "users", user.uid), { referralCode: profile.referralCode });
+    }
     document.getElementById('referralCode').textContent = profile.referralCode || '--------';
     document.getElementById('referralCount').textContent = profile.referralCount || 0;
     document.getElementById('rewardPerReferral').textContent = tierKey === 'cock' ? '100' : '200';
