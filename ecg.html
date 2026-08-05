@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm ECG</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+})();
+</script>
+<script src="toast.js?v=2"></script>
+<script>
+function showPageError(msg) {
+  console.error('Page error:', msg);
+  var loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+    '<i class="fa-solid fa-cloud-arrow-down" style="font-size:32px;color:var(--brand);margin-bottom:14px;display:block;"></i>' +
+    '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">Having Trouble Loading</div>' +
+    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Check your internet connection and try again.</div>' +
+    '<button onclick="location.reload()" style="width:auto;padding:10px 20px;">Retry</button></div>';
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+window.addEventListener('error', function(e) {
+  showPageError((e.message || 'Unknown error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason);
+  showPageError(msg);
+});
+</script>
+</head>
+<body>
+<div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="headerBack()"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <div style="width:40px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="section-title" style="margin-top:0">ECG Electricity</div>
+
+  <div class="verified-name-box" style="margin-bottom:20px;">
+    <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Your Points Balance</div>
+    <div class="verified-name-value" id="pointsBalance">-</div>
+  </div>
+
+  <div class="step-dots">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+  </div>
+
+  <div id="step1" class="kyc-step">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Phone Number</label>
+    <input type="tel" id="ecgPhone" placeholder="Enter your number">
+    <button id="findBtn" onclick="findMeters()" style="margin-top:16px;">Find Meters</button>
+  </div>
+
+  <div id="step2" class="kyc-step" style="display:none;">
+    <div id="meterList"></div>
+  </div>
+
+  <div id="step3" class="kyc-step" style="display:none;">
+    <div class="verified-name-box" style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:4px;">Meter</div>
+      <div class="verified-name-value" id="selectedMeterName">-</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-top:6px;" id="selectedMeterBalance"></div>
+    </div>
+
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Amount (GHS)</label>
+    <input type="number" id="ecgAmount" placeholder="e.g. 20" oninput="onAmountInput()">
+    <div style="font-size:12px;color:var(--text-dim);margin:-8px 0 16px 4px;min-height:16px;" id="costLabel"></div>
+
+    <button id="payBtn" onclick="payEcg()">Top Up Meter</button>
+  </div>
+
+  <div id="step4" class="kyc-step" style="display:none;text-align:center;padding:40px 0;">
+    <i class="fa-solid fa-circle-check" style="font-size:48px;color:var(--brand);margin-bottom:16px;"></i>
+    <div style="font-weight:800;font-size:18px;margin-bottom:8px;">Meter Topped Up!</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;" id="successText">Delivered successfully.</div>
+    <button onclick="window.location.href='marketplace.html'">Back to Marketplace</button>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, getUserProfile, getOrCreateWallet } from './firebase-config.js?v=3';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  const WORKER_URL = 'https://rancharm-worker.antwordtech.workers.dev';
+  let currentUser = null;
+  let currentPoints = 0;
+  let currentStep = 1;
+  let selectedMeter = null;
+  let selectedPhone = '';
+
+  onAuthStateChanged(auth, async function(user) {
+    if (!user) { window.location.href = 'login.html'; return; }
+    const profile = await getUserProfile(user.uid);
+    if (!profile) { window.location.href = 'complete-profile.html'; return; }
+    currentUser = user;
+
+    const wallet = await getOrCreateWallet(user);
+    currentPoints = wallet.points || 0;
+    document.getElementById('pointsBalance').textContent = currentPoints.toLocaleString() + ' pts';
+
+    document.body.classList.add('ready');
+  });
+
+  window.goToStep = function(n) {
+    currentStep = n;
+    [1, 2, 3, 4].forEach(function(i) {
+      document.getElementById('step' + i).style.display = i === n ? 'block' : 'none';
+      document.getElementById('dot' + i).classList.toggle('active', i === n);
+    });
+  };
+
+  window.headerBack = function() {
+    if (currentStep > 1 && currentStep < 4) {
+      goToStep(currentStep - 1);
+    } else {
+      window.location.href = 'marketplace.html';
+    }
+  };
+
+  window.findMeters = async function() {
+    const phone = document.getElementById('ecgPhone').value.trim();
+    if (!phone) { toast('Enter your phone number', 'error'); return; }
+    selectedPhone = phone;
+
+    const btn = document.getElementById('findBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Finding...';
+
+    try {
+      const res = await fetch(WORKER_URL + '/fricopay-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ method: 'GET', path: '/devapi/v1/ecg/meters', params: { phone: phone } })
+      });
+      const data = await res.json();
+      const meters = data.meters || [];
+
+      const list = document.getElementById('meterList');
+      if (!meters.length) {
+        list.innerHTML = '<div class="empty-note">No meters found for this number.</div>';
+        return;
+      }
+
+      list.innerHTML = '';
+      goToStep(2);
+      meters.forEach(function(m, i) {
+        const item = document.createElement('div');
+        item.className = 'task-card reveal';
+        item.style.animationDelay = (i * 0.03) + 's';
+        item.innerHTML =
+          '<div><div class="task-title">' + (m.name || 'ECG Meter') + '</div><div class="task-desc">' + m.meter + ' &middot; Balance GHS ' + m.balance + '</div></div>' +
+          '<button class="btn-small" data-meter="' + m.meter + '" data-name="' + (m.name || 'ECG Meter') + '" data-balance="' + m.balance + '" onclick="selectMeterClick(this)">Select</button>';
+        list.appendChild(item);
+      });
+    } catch (e) {
+      toast('Could not load meters. Try again.', 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Find Meters';
+    }
+  };
+
+  window.selectMeterClick = function(btn) {
+    selectedMeter = btn.dataset.meter;
+    document.getElementById('selectedMeterName').textContent = btn.dataset.name + ' (' + selectedMeter + ')';
+    document.getElementById('selectedMeterBalance').textContent = 'Current balance: GHS ' + btn.dataset.balance;
+    goToStep(3);
+  };
+
+  window.onAmountInput = function() {
+    const amount = parseFloat(document.getElementById('ecgAmount').value);
+    const label = document.getElementById('costLabel');
+    if (!amount || amount <= 0) { label.textContent = ''; return; }
+    label.textContent = 'Costs ' + Math.round(amount * 100).toLocaleString() + ' points';
+  };
+
+  window.payEcg = async function() {
+    const amount = document.getElementById('ecgAmount').value.trim();
+    if (!amount || Number(amount) <= 0) { toast('Enter a valid amount', 'error'); return; }
+
+    const pointsCost = Math.round(Number(amount) * 100);
+    if (pointsCost > currentPoints) { toast('Insufficient points balance', 'error'); return; }
+
+    const btn = document.getElementById('payBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+
+    try {
+      const res = await fetch(WORKER_URL + '/spend-ecg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          uid: currentUser.uid,
+          meter: selectedMeter,
+          phone: selectedPhone,
+          amountGHS: amount,
+          user_reference: currentUser.uid
+        })
+      });
+      const data = await res.json();
+
+      if (data.ok) {
+        document.getElementById('successText').textContent = 'GHS ' + amount + ' credited to meter ' + selectedMeter + '.';
+        goToStep(4);
+      } else if (data.error === 'Insufficient points balance') {
+        toast('Insufficient points balance', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Top Up Meter';
+      } else {
+        toast(data.error || 'Something went wrong. Try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Top Up Meter';
+      }
+    } catch (e) {
+      toast('Something went wrong. Try again.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Top Up Meter';
+    }
+  };
+</script>
+</body>
+</html>
