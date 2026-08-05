@@ -65,7 +65,7 @@ window.addEventListener('unhandledrejection', function(e) {
 </div>
 
 <script type="module">
-  import { auth, getUserProfile, SUBSCRIPTIONS } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, getUserProfile, SUBSCRIPTIONS } from './firebase-config.js?v=3';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   onAuthStateChanged(auth, async (user) => {
@@ -99,8 +99,24 @@ window.addEventListener('unhandledrejection', function(e) {
     });
   }
 
-  window.subscribeClick = (btn) => {
+  window.subscribeClick = async (btn) => {
     const key = btn.dataset.subKey;
+
+    if (key === 'free') {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+      try {
+        await updateDoc(doc(db, "users", auth.currentUser.uid), { subscriptionTier: 'free' });
+        toast('Downgraded to Free plan', 'success');
+        setTimeout(function() { window.location.reload(); }, 1000);
+      } catch (e) {
+        toast('Something went wrong. Try again.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Subscribe';
+      }
+      return;
+    }
+
     window.location.href = 'checkout.html?type=subscription&key=' + key;
   };
 </script>

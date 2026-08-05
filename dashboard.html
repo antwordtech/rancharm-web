@@ -297,10 +297,11 @@ window.addEventListener('unhandledrejection', function(e) {
     window.location.href = 'login.html';
   };
 
-  let balanceHidden = false;
+  let balanceHidden = localStorage.getItem('rancharm-balance-hidden') === 'true';
   let lastCoins = 0;
   window.toggleBalanceVisibility = () => {
     balanceHidden = !balanceHidden;
+    localStorage.setItem('rancharm-balance-hidden', balanceHidden);
     document.getElementById('coinsDisplay').textContent = balanceHidden ? '••••' : lastCoins.toLocaleString();
     document.getElementById('eyeIcon').className = balanceHidden ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
   };
@@ -322,7 +323,9 @@ window.addEventListener('unhandledrejection', function(e) {
     const [profile, wallet] = await Promise.all([getUserProfile(user.uid), getOrCreateWallet(user)]);
     if (!profile) { window.location.href = 'complete-profile.html'; return; }
 
-    lastCoins = wallet.coins;
+    const walletCoins = Math.floor((wallet.points || 0) / 1000);
+    const walletRemainderPoints = (wallet.points || 0) % 1000;
+    lastCoins = walletCoins;
     const tierKey = profile.animalTier || "cock";
     const animal = ANIMALS.find(a => a.key === tierKey);
     const initial = (user.email || '?').charAt(0).toUpperCase();
@@ -339,8 +342,13 @@ window.addEventListener('unhandledrejection', function(e) {
 
     document.body.classList.add('ready');
 
-    animateNumber('pointsDisplay', wallet.points);
-    animateNumber('coinsDisplay', wallet.coins);
+    animateNumber('pointsDisplay', walletRemainderPoints);
+    if (!balanceHidden) {
+      animateNumber('coinsDisplay', walletCoins);
+    } else {
+      document.getElementById('coinsDisplay').textContent = '••••';
+      document.getElementById('eyeIcon').className = 'fa-solid fa-eye-slash';
+    }
   });
 </script>
 </body>
