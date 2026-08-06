@@ -522,3 +522,6 @@ body.ready .page-loader { opacity: 0; pointer-events: none; }
 .service-row-title { font-weight: 700; font-size: 14px; }
 .service-row-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
 .service-row-chevron { margin-left: auto; color: var(--text-dim); font-size: 14px; flex-shrink: 0; }
+html.theme-dark input { background: #16211f; border-color: #223330; color: #fff; }
+html.theme-dark input:focus { background: #16211f; }
+html.theme-light input { background: #fff; color: #0f1720; }

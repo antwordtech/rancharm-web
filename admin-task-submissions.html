@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0f9d8c" id="metaTheme">
+<title>Rancharm Admin Task Submissions</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
+<link rel="stylesheet" href="styles.css?v=2">
+<script>
+(function(){
+  var t = localStorage.getItem('rancharm-theme');
+  if (t === 'dark') document.documentElement.classList.add('theme-dark');
+  else if (t === 'light') document.documentElement.classList.add('theme-light');
+})();
+</script>
+<script src="toast.js?v=2"></script>
+<script>
+function showPageError(msg) {
+  console.error('Page error:', msg);
+  var loader = document.getElementById('pageLoader');
+  if (!loader) return;
+  loader.innerHTML = '<div style="text-align:center;padding:24px;max-width:320px;">' +
+    '<i class="fa-solid fa-cloud-arrow-down" style="font-size:32px;color:var(--brand);margin-bottom:14px;display:block;"></i>' +
+    '<div style="font-weight:800;font-size:16px;margin-bottom:8px;">Having Trouble Loading</div>' +
+    '<div style="font-size:13px;color:var(--text-dim);margin-bottom:18px;">Check your internet connection and try again.</div>' +
+    '<button onclick="location.reload()" style="width:auto;padding:10px 20px;">Retry</button></div>';
+  loader.style.opacity = '1';
+  loader.style.pointerEvents = 'auto';
+}
+window.addEventListener('error', function(e) {
+  showPageError((e.message || 'Unknown error') + (e.filename ? ' (' + e.filename.split('/').pop() + ':' + e.lineno + ')' : ''));
+});
+window.addEventListener('unhandledrejection', function(e) {
+  var msg = (e.reason && e.reason.message) ? e.reason.message : String(e.reason);
+  showPageError(msg);
+});
+</script>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-512.png">
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  });
+}
+</script>
+</head>
+<body>
+<div class="page-loader page-loader-app" id="pageLoader"><dotlottie-wc src="https://lottie.host/455b3c68-8f9a-4345-b369-2fd3162bc953/Qc4CNAKTcR.json" style="width:140px;height:140px;" autoplay loop></dotlottie-wc></div>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <button class="icon-btn" onclick="window.location.href='admin-dashboard.html'"><i class="fa-solid fa-chevron-left"></i></button>
+    <div class="topbar-logo">Ranch<span>arm</span></div>
+    <div style="width:40px;"></div>
+  </div>
+</div>
+
+<div class="page">
+  <div class="section-title" style="margin-top:0">Task Submissions</div>
+  <div id="submissionsList">
+    <div class="skeleton" style="height:160px;margin-bottom:14px;"></div>
+    <div class="skeleton" style="height:160px;margin-bottom:14px;"></div>
+  </div>
+</div>
+
+<script type="module">
+  import { auth, db, doc, updateDoc, increment, isAdmin, getUserProfile, collection, query, where, getDocs } from './firebase-config.js?v=3';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  onAuthStateChanged(auth, async function(user) {
+    if (!user) { window.location.href = 'login.html'; return; }
+    if (!isAdmin(user)) { window.location.href = 'dashboard.html'; return; }
+
+    await loadSubmissions();
+    document.body.classList.add('ready');
+  });
+
+  async function loadSubmissions() {
+    const list = document.getElementById('submissionsList');
+    const snap = await getDocs(query(collection(db, "taskSubmissions"), where("status", "==", "pending")));
+
+    if (snap.empty) {
+      list.innerHTML = '<div class="empty-note">No pending submissions.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    let i = 0;
+    for (const docSnap of snap.docs) {
+      const sub = docSnap.data();
+      const subId = docSnap.id;
+      const profile = await getUserProfile(sub.uid);
+      const email = (profile && profile.email) || sub.uid;
+
+      let proofHtml = '';
+      if (sub.answer) {
+        proofHtml += '<div class="profile-row"><div class="profile-row-label">Answer</div><div class="profile-row-value">' + sub.answer + '</div></div>';
+      }
+      if (sub.link) {
+        proofHtml += '<div class="profile-row"><div class="profile-row-label">Link</div><div class="profile-row-value"><a href="' + sub.link + '" target="_blank" style="color:var(--brand-dark);">' + sub.link + '</a></div></div>';
+      }
+      if (sub.photoUrl) {
+        proofHtml += '<a href="' + sub.photoUrl + '" target="_blank"><img src="' + sub.photoUrl + '" style="width:100%;max-height:180px;object-fit:cover;border-radius:14px;margin-top:10px;"></a>';
+      }
+
+      const card = document.createElement('div');
+      card.className = 'profile-card reveal';
+      card.style.marginBottom = '14px';
+      card.style.animationDelay = (i * 0.05) + 's';
+      i++;
+      card.innerHTML = `
+        <div class="profile-row"><div class="profile-row-label">Task</div><div class="profile-row-value">${sub.taskTitle}</div></div>
+        <div class="profile-row"><div class="profile-row-label">User</div><div class="profile-row-value">${email}</div></div>
+        <div class="profile-row"><div class="profile-row-label">Reward</div><div class="profile-row-value">+${sub.pointsReward} pts</div></div>
+        ${proofHtml}
+        <div style="display:flex;gap:10px;margin-top:14px;">
+          <button class="btn-danger" onclick="rejectSubmission('${subId}', this)">Reject</button>
+          <button onclick="approveSubmission('${subId}', '${sub.uid}', ${sub.pointsReward}, this)">Approve</button>
+        </div>
+      `;
+      list.appendChild(card);
+    }
+  }
+
+  window.approveSubmission = async function(subId, uid, pointsReward, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      await Promise.all([
+        updateDoc(doc(db, "taskSubmissions", subId), { status: "approved" }),
+        updateDoc(doc(db, "wallets", uid), { points: increment(pointsReward) })
+      ]);
+      toast('Approved and credited', 'success');
+      await loadSubmissions();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+      btn.disabled = false;
+    }
+  };
+
+  window.rejectSubmission = async function(subId, btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    try {
+      await updateDoc(doc(db, "taskSubmissions", subId), { status: "rejected" });
+      toast('Rejected', 'success');
+      await loadSubmissions();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+      btn.disabled = false;
+    }
+  };
+</script>
+</body>
+</html>

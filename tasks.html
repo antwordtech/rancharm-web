@@ -10,36 +10,11 @@
 <script src="https://unpkg.com/@lottiefiles/dotlottie-wc@0.9.4/dist/dotlottie-wc.js" type="module"></script>
 <link rel="stylesheet" href="styles.css?v=2">
 <script>
-function syncThemeColor(){
-  var meta = document.getElementById('metaTheme');
-  if (!meta) return;
-  var isDark = document.documentElement.classList.contains('theme-dark') ||
-    (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  meta.setAttribute('content', isDark ? '#0b1210' : '#0f9d8c');
-}
 (function(){
   var t = localStorage.getItem('rancharm-theme');
   if (t === 'dark') document.documentElement.classList.add('theme-dark');
   else if (t === 'light') document.documentElement.classList.add('theme-light');
-  syncThemeColor();
 })();
-window.toggleTheme = function() {
-  var html = document.documentElement;
-  var isDark = html.classList.contains('theme-dark');
-  html.classList.remove('theme-dark','theme-light');
-  if (isDark) { html.classList.add('theme-light'); localStorage.setItem('rancharm-theme','light'); }
-  else { html.classList.add('theme-dark'); localStorage.setItem('rancharm-theme','dark'); }
-  syncThemeSwitch();
-  syncThemeColor();
-};
-function syncThemeSwitch(){
-  var sw = document.getElementById('themeSwitch');
-  if (!sw) return;
-  var isDark = document.documentElement.classList.contains('theme-dark') ||
-    (!document.documentElement.classList.contains('theme-light') && window.matchMedia('(prefers-color-scheme: dark)').matches);
-  sw.classList.toggle('on', isDark);
-}
-document.addEventListener('DOMContentLoaded', function(){ syncThemeSwitch(); syncThemeColor(); });
 </script>
 <script src="toast.js?v=2"></script>
 <script>
@@ -63,7 +38,6 @@ window.addEventListener('unhandledrejection', function(e) {
   showPageError(msg);
 });
 </script>
-
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
 <script>
@@ -79,112 +53,98 @@ if ('serviceWorker' in navigator) {
 
 <div class="topbar">
   <div class="topbar-inner">
-    <button class="icon-btn" onclick="window.location.href='dashboard.html'"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="icon-btn" onclick="headerBack()"><i class="fa-solid fa-chevron-left"></i></button>
     <div class="topbar-logo">Ranch<span>arm</span></div>
-    <a class="icon-btn" href="https://whatsapp.com/channel/0029VbDYtgnDuMRX0yFQVo1h" target="_blank" rel="noopener" style="text-decoration:none;"><i class="fa-brands fa-whatsapp"></i></a>
-  </div>
-</div>
-
-<div class="drawer-backdrop" id="drawerBackdrop" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawerPanel">
-  <div class="drawer-header">
-    <div class="drawer-avatar" id="drawerAvatar">?</div>
-    <div>
-      <div class="drawer-email" id="drawerEmail">...</div>
-      <div class="drawer-tier" id="drawerTier">...</div>
-    </div>
-  </div>
-  <a class="drawer-link" href="dashboard.html"><i class="fa-solid fa-house"></i>Home</a>
-  <a class="drawer-link" href="ranch-store.html"><i class="fa-solid fa-store"></i>Store</a>
-  <a class="drawer-link" href="my-ranch.html"><i class="fa-solid fa-paw"></i>My Ranch</a>
-  <a class="drawer-link active" href="tasks.html"><i class="fa-solid fa-list-check"></i>Tasks</a>
-  <a class="drawer-link" href="referrals.html"><i class="fa-solid fa-user-group"></i>Referrals</a>
-  <a class="drawer-link" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
-  <a class="drawer-link" href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i>Leaderboard</a>
-  <a class="drawer-link" href="marketplace.html"><i class="fa-solid fa-fire"></i>Marketplace</a>
-  <a class="drawer-link" href="subscription.html"><i class="fa-solid fa-crown"></i>Subscription</a>
-
-  <div class="drawer-link" style="cursor:pointer;" onclick="toggleTheme()">
-    <i class="fa-solid fa-circle-half-stroke"></i>
-    <span style="flex:1;">Dark Mode</span>
-    <span class="theme-switch" id="themeSwitch"><span class="theme-switch-knob"></span></span>
-  </div>
-  <a class="drawer-link" href="#" onclick="toast('Withdrawals coming soon'); return false;"><i class="fa-solid fa-arrow-up-from-bracket"></i>Withdraw</a>
-
-  <div class="drawer-footer">
-    <div class="drawer-link" style="cursor:pointer;" onclick="confirmLogout()">
-      <i class="fa-solid fa-person-running" style="background:rgba(244,63,94,0.1);color:#f43f5e;"></i>
-      <span style="color:#f43f5e;">Log Out</span>
-    </div>
-  </div>
-</div>
-
-<div class="logout-modal-backdrop" id="logoutModalBackdrop" onclick="closeLogoutModal(event)">
-  <div class="logout-modal" onclick="event.stopPropagation()">
-    <div class="logout-modal-icon"><i class="fa-solid fa-person-running"></i></div>
-    <div class="logout-modal-title">Log Out?</div>
-    <div class="logout-modal-text">Are you sure you want to log out of Rancharm?</div>
-    <div class="logout-modal-actions">
-      <button class="btn-outline" onclick="closeLogoutModal()">Cancel</button>
-      <button class="btn-danger" onclick="doLogout()">Log Out</button>
-    </div>
+    <div style="width:40px;"></div>
   </div>
 </div>
 
 <div class="page">
-  <div class="section-title" style="margin-top:0">Tasks</div>
-  <div id="tasksList">
-    <div class="skeleton" style="height:70px;margin-bottom:12px;"></div>
-    <div class="skeleton" style="height:70px;margin-bottom:12px;"></div>
+  <div id="listView">
+    <div class="section-title" style="margin-top:0">Tasks</div>
+    <div id="tasksList">
+      <div class="skeleton" style="height:90px;margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:90px;margin-bottom:12px;"></div>
+    </div>
+  </div>
+
+  <div id="detailView" style="display:none;">
+    <div class="verified-name-box" style="text-align:center;margin-bottom:20px;">
+      <img id="detailImage" style="width:100%;max-height:160px;object-fit:cover;border-radius:16px;margin-bottom:16px;display:none;">
+      <div style="font-weight:800;font-size:18px;margin-bottom:6px;" id="detailTitle">-</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;" id="detailDesc">-</div>
+      <div style="font-size:13px;font-weight:700;color:var(--brand-dark);" id="detailReward">-</div>
+    </div>
+
+    <a id="detailLinkBtn" href="#" target="_blank" rel="noopener" style="display:none;text-decoration:none;">
+      <button style="width:100%;margin-bottom:20px;">Go to Task</button>
+    </a>
+
+    <div id="answerField" style="display:none;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Your Answer</label>
+      <input type="text" id="submitAnswer" placeholder="Type your answer">
+    </div>
+
+    <div id="linkField" style="display:none;">
+      <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Proof Link</label>
+      <input type="text" id="submitLink" placeholder="Paste your post or profile link">
+    </div>
+
+    <div id="photoField" style="display:none;">
+      <label class="photo-upload-box" id="photoBox">
+        <div class="photo-icon-circle"><i class="fa-solid fa-camera"></i></div>
+        <div class="photo-upload-title" id="photoTitle">Upload proof photo</div>
+        <div class="photo-upload-hint" id="photoHint">Tap to choose a photo</div>
+        <div class="photo-preview-wrap" id="photoPreviewWrap" style="display:none;">
+          <img id="photoPreview" class="photo-preview">
+          <div class="photo-check-badge"><i class="fa-solid fa-check"></i></div>
+        </div>
+        <input type="file" accept="image/*" id="submitPhotoFile" style="display:none;" onchange="previewSubmitPhoto(this)">
+      </label>
+    </div>
+
+    <button id="submitTaskBtn" onclick="submitTask()" style="margin-top:16px;">Submit for Review</button>
+  </div>
+
+  <div id="successView" style="display:none;text-align:center;padding:40px 0;">
+    <i class="fa-solid fa-clock" style="font-size:48px;color:var(--brand);margin-bottom:16px;"></i>
+    <div style="font-weight:800;font-size:18px;margin-bottom:8px;">Submitted!</div>
+    <div style="font-size:13px;color:var(--text-dim);margin-bottom:24px;">Your submission is pending review. You'll be credited once approved.</div>
+    <button onclick="window.location.href='tasks.html'">Back to Tasks</button>
   </div>
 </div>
 
 <script type="module">
-  import { auth, db, doc, updateDoc, increment, arrayUnion, collection, query, where, getDocs, getUserProfile } from './firebase-config.js?v=3';
-  import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { auth, db, storage, getUserProfile, collection, query, where, getDocs, addDoc } from './firebase-config.js?v=3';
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  window.openDrawer = () => {
-    document.getElementById('drawerBackdrop').classList.add('open');
-    document.getElementById('drawerPanel').classList.add('open');
-    document.body.classList.add('drawer-open');
-  };
-  window.closeDrawer = () => {
-    document.getElementById('drawerBackdrop').classList.remove('open');
-    document.getElementById('drawerPanel').classList.remove('open');
-    document.body.classList.remove('drawer-open');
-  };
-  window.confirmLogout = () => {
-    document.getElementById('logoutModalBackdrop').classList.add('open');
-  };
-  window.closeLogoutModal = (e) => {
-    if (e && e.target !== e.currentTarget) return;
-    document.getElementById('logoutModalBackdrop').classList.remove('open');
-  };
-  window.doLogout = async () => {
-    await signOut(auth);
-    window.location.href = 'login.html';
-  };
+  const TIER_RANK = { free: 0, premium: 1, vip: 2, elite: 3 };
+  let currentUser = null;
+  let userTierRank = 0;
+  let submittedTaskIds = {};
+  let selectedTask = null;
+  let selectedTaskId = null;
+  let photoFile = null;
+  let inDetailView = false;
 
-  let currentUid = null;
-  let completedTasks = [];
-  let kycApproved = false;
-
-  onAuthStateChanged(auth, async (user) => {
+  onAuthStateChanged(auth, async function(user) {
     if (!user) { window.location.href = 'login.html'; return; }
 
-    const [profile, tasksSnap] = await Promise.all([
+    const [profile, submissionsSnap, tasksSnap] = await Promise.all([
       getUserProfile(user.uid),
+      getDocs(query(collection(db, "taskSubmissions"), where("uid", "==", user.uid))),
       getDocs(query(collection(db, "tasks"), where("active", "==", true)))
     ]);
+
     if (!profile) { window.location.href = 'complete-profile.html'; return; }
+    currentUser = user;
+    userTierRank = TIER_RANK[profile.subscriptionTier || 'free'] || 0;
 
-    currentUid = user.uid;
-    completedTasks = profile.completedTasks || [];
-    kycApproved = (profile.kycStatus || 'unverified') === 'approved';
-
-    const initial = (user.email || '?').charAt(0).toUpperCase();
-    document.getElementById('drawerAvatar').textContent = initial;
-    document.getElementById('drawerEmail').textContent = user.email || '...';
+    submissionsSnap.forEach(function(docSnap) {
+      const sub = docSnap.data();
+      submittedTaskIds[sub.taskId] = sub.status;
+    });
 
     renderTasks(tasksSnap);
     document.body.classList.add('ready');
@@ -193,58 +153,144 @@ if ('serviceWorker' in navigator) {
   function renderTasks(snap) {
     const list = document.getElementById('tasksList');
 
-    if (snap.empty) {
-      list.innerHTML = '<div class="empty-note">No active tasks right now. Check back soon.</div>';
+    const eligible = [];
+    snap.forEach(function(docSnap) {
+      const task = docSnap.data();
+      const taskRank = TIER_RANK[task.requiredTier || 'free'] || 0;
+      if (userTierRank >= taskRank) {
+        eligible.push({ id: docSnap.id, ...task });
+      }
+    });
+
+    if (!eligible.length) {
+      list.innerHTML = '<div class="empty-note">No tasks available right now.</div>';
       return;
     }
 
     list.innerHTML = '';
-    let i = 0;
-    snap.forEach((docSnap) => {
-      const task = docSnap.data();
-      const taskId = docSnap.id;
-      const done = completedTasks.includes(taskId);
-
+    eligible.forEach(function(task, i) {
+      const status = submittedTaskIds[task.id];
       const item = document.createElement('div');
       item.className = 'task-card reveal';
       item.style.animationDelay = (i * 0.05) + 's';
-      i++;
-      item.innerHTML = `
-        <div>
-          <div class="task-title">${task.title}</div>
-          <div class="task-desc">${task.description || ''}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <div class="task-reward">+${task.pointsReward} pts</div>
-          ${done ? '<div class="owned-badge">Done</div>' : `<button class="btn-small" onclick="claimTask(this,'${taskId}', ${task.pointsReward})">Claim</button>`}
-        </div>
-      `;
+
+      let actionHtml = '';
+      if (status === 'approved') {
+        actionHtml = '<div class="owned-badge">Completed</div>';
+      } else if (status === 'pending') {
+        actionHtml = '<div class="owned-badge" style="background:rgba(148,163,184,0.15);color:var(--text-dim);">Pending Review</div>';
+      } else {
+        actionHtml = '<button class="btn-small" data-task-id="' + task.id + '" onclick="openTaskClick(this)">Do Task</button>';
+      }
+
+      item.innerHTML =
+        '<div><div class="task-title">' + task.title + '</div><div class="task-desc">' + (task.description || '') + ' &middot; +' + task.pointsReward + ' pts</div></div>' +
+        actionHtml;
       list.appendChild(item);
     });
+
+    window.__tasksData = eligible;
   }
 
-  window.claimTask = async (btn, taskId, reward) => {
-    if (completedTasks.includes(taskId)) return;
+  window.openTaskClick = function(btn) {
+    const taskId = btn.dataset.taskId;
+    const task = window.__tasksData.find(function(t) { return t.id === taskId; });
+    if (!task) return;
+    openTask(task, taskId);
+  };
 
-    const original = btn.innerHTML;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    btn.classList.add('btn-loading');
+  function openTask(task, taskId) {
+    selectedTask = task;
+    selectedTaskId = taskId;
+    photoFile = null;
+
+    document.getElementById('detailTitle').textContent = task.title;
+    document.getElementById('detailDesc').textContent = task.description || '';
+    document.getElementById('detailReward').textContent = '+' + task.pointsReward + ' points on approval';
+
+    const img = document.getElementById('detailImage');
+    if (task.imageUrl) { img.src = task.imageUrl; img.style.display = 'block'; } else { img.style.display = 'none'; }
+
+    const linkBtn = document.getElementById('detailLinkBtn');
+    if (task.link) { var normalizedLink = /^https?:\/\//i.test(task.link) ? task.link : 'https://' + task.link; linkBtn.href = normalizedLink; linkBtn.style.display = 'block'; } else { linkBtn.style.display = 'none'; }
+
+    document.getElementById('answerField').style.display = task.requireAnswer ? 'block' : 'none';
+    document.getElementById('linkField').style.display = task.requireLink ? 'block' : 'none';
+    document.getElementById('photoField').style.display = task.requirePhoto ? 'block' : 'none';
+
+    document.getElementById('submitAnswer').value = '';
+    document.getElementById('submitLink').value = '';
+    document.getElementById('photoPreviewWrap').style.display = 'none';
+    document.getElementById('photoBox').classList.remove('has-file');
+    document.getElementById('photoTitle').textContent = 'Upload proof photo';
+    document.getElementById('photoHint').textContent = 'Tap to choose a photo';
+
+    document.getElementById('listView').style.display = 'none';
+    document.getElementById('detailView').style.display = 'block';
+    document.getElementById('successView').style.display = 'none';
+    inDetailView = true;
+  }
+
+  window.headerBack = function() {
+    if (inDetailView) {
+      document.getElementById('detailView').style.display = 'none';
+      document.getElementById('listView').style.display = 'block';
+      inDetailView = false;
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  };
+
+  window.previewSubmitPhoto = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    photoFile = file;
+    const url = URL.createObjectURL(file);
+    document.getElementById('photoPreview').src = url;
+    document.getElementById('photoPreviewWrap').style.display = 'block';
+    document.getElementById('photoBox').classList.add('has-file');
+    document.getElementById('photoTitle').textContent = 'Photo selected';
+    document.getElementById('photoHint').textContent = 'Tap to change';
+  };
+
+  window.submitTask = async function() {
+    const answer = document.getElementById('submitAnswer').value.trim();
+    const link = document.getElementById('submitLink').value.trim();
+
+    if (selectedTask.requireAnswer && !answer) { toast('Please enter your answer', 'error'); return; }
+    if (selectedTask.requireLink && !link) { toast('Please enter your proof link', 'error'); return; }
+    if (selectedTask.requirePhoto && !photoFile) { toast('Please upload a proof photo', 'error'); return; }
+
+    const btn = document.getElementById('submitTaskBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Submitting...';
 
     try {
-      await Promise.all([
-        updateDoc(doc(db, "users", currentUid), { completedTasks: arrayUnion(taskId) }),
-        updateDoc(doc(db, "wallets", currentUid), { points: increment(reward), lastUpdated: Date.now() })
-      ]);
-      completedTasks.push(taskId);
-      toast(`+${reward} points claimed!`, 'success');
-      const done = document.createElement('div');
-      done.className = 'owned-badge';
-      done.textContent = 'Done';
-      btn.replaceWith(done);
+      let photoUrl = '';
+      if (photoFile) {
+        const photoRef = ref(storage, 'taskSubmissions/' + currentUser.uid + '_' + selectedTaskId + '/photo.jpg');
+        await uploadBytes(photoRef, photoFile);
+        photoUrl = await getDownloadURL(photoRef);
+      }
+
+      await addDoc(collection(db, "taskSubmissions"), {
+        uid: currentUser.uid,
+        taskId: selectedTaskId,
+        taskTitle: selectedTask.title,
+        pointsReward: selectedTask.pointsReward,
+        answer: answer,
+        link: link,
+        photoUrl: photoUrl,
+        status: 'pending',
+        createdAt: Date.now()
+      });
+
+      document.getElementById('detailView').style.display = 'none';
+      document.getElementById('successView').style.display = 'block';
     } catch (e) {
-      btn.innerHTML = original;
-      btn.classList.remove('btn-loading');
-      toast('Could not claim task. Try again.', 'error');
+      toast('Something went wrong: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Submit for Review';
     }
   };
 </script>

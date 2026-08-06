@@ -38,7 +38,6 @@ window.addEventListener('unhandledrejection', function(e) {
   showPageError(msg);
 });
 </script>
-
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-512.png">
 <script>
@@ -54,26 +53,101 @@ if ('serviceWorker' in navigator) {
 
 <div class="topbar">
   <div class="topbar-inner">
-    <button class="icon-btn" onclick="window.location.href='admin-dashboard.html'"><i class="fa-solid fa-chevron-left"></i></button>
+    <button class="icon-btn" onclick="headerBack()"><i class="fa-solid fa-chevron-left"></i></button>
     <div class="topbar-logo">Ranch<span>arm</span></div>
     <div style="width:40px;"></div>
   </div>
 </div>
 
 <div class="page">
-  <div class="section-title" style="margin-top:0">Manage Tasks</div>
-
-  <div class="profile-card" style="margin-bottom:20px;">
-    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Title</label>
-    <input type="text" id="newTitle" placeholder="e.g. Follow us on social media">
-    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Description</label>
-    <input type="text" id="newDesc" placeholder="Short description">
-    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Points Reward</label>
-    <input type="number" id="newPoints" placeholder="50">
-    <button id="addTaskBtn" onclick="addTask()">Add Task</button>
+  <div class="section-title" style="margin-top:0">Create Task</div>
+  <div class="step-dots">
+    <div class="step-dot active" id="dot1"></div>
+    <div class="step-dot" id="dot2"></div>
+    <div class="step-dot" id="dot3"></div>
+    <div class="step-dot" id="dot4"></div>
+    <div class="step-dot" id="dot5"></div>
   </div>
 
-  <div class="section-title" style="font-size:14px;">Existing Tasks</div>
+  <div id="step1" class="kyc-step">
+    <label class="photo-upload-box" id="imgBox">
+      <div class="photo-icon-circle"><i class="fa-solid fa-image"></i></div>
+      <div class="photo-upload-title" id="imgTitle">Add a task image</div>
+      <div class="photo-upload-hint" id="imgHint">Tap to choose a photo</div>
+      <div class="photo-preview-wrap" id="imgPreviewWrap" style="display:none;">
+        <img id="imgPreview" class="photo-preview">
+        <div class="photo-check-badge"><i class="fa-solid fa-check"></i></div>
+      </div>
+      <input type="file" accept="image/*" id="taskImageFile" style="display:none;" onchange="previewTaskImage(this)">
+    </label>
+    <button onclick="goToStep(2)" style="margin-top:16px;">Next</button>
+  </div>
+
+  <div id="step2" class="kyc-step" style="display:none;">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Title</label>
+    <input type="text" id="newTitle" placeholder="e.g. Follow us on Instagram">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Description</label>
+    <input type="text" id="newDesc" placeholder="Explain what the user needs to do">
+    <button onclick="goToStep(3)" style="margin-top:16px;">Next</button>
+  </div>
+
+  <div id="step3" class="kyc-step" style="display:none;">
+    <div class="referral-earn-note reveal">
+      <i class="fa-solid fa-circle-info" style="margin-right:6px;color:var(--brand);"></i>
+      Optional: where should users go to complete this task?
+    </div>
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Destination Link</label>
+    <input type="text" id="newLink" placeholder="e.g. https://instagram.com/rancharm">
+    <button onclick="goToStep(4)" style="margin-top:16px;">Next</button>
+  </div>
+
+  <div id="step4" class="kyc-step" style="display:none;">
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;">Points Reward</label>
+    <input type="number" id="newPoints" placeholder="e.g. 100">
+
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:6px;margin-top:16px;">Who Can Access This Task</label>
+    <div class="id-type-grid">
+      <div class="id-type-option selected" data-value="free" onclick="selectTier(this)">
+        <div class="id-type-option-name">Everyone</div>
+      </div>
+      <div class="id-type-option" data-value="premium" onclick="selectTier(this)">
+        <div class="id-type-option-name">Premium+</div>
+      </div>
+      <div class="id-type-option" data-value="vip" onclick="selectTier(this)">
+        <div class="id-type-option-name">VIP+</div>
+      </div>
+      <div class="id-type-option" data-value="elite" onclick="selectTier(this)">
+        <div class="id-type-option-name">Elite Only</div>
+      </div>
+    </div>
+
+    <label style="font-size:12px;font-weight:700;color:var(--text-dim);display:block;margin-bottom:10px;margin-top:16px;">What Should Users Submit?</label>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;font-weight:600;">Require a written answer</span>
+      <span class="theme-switch" id="answerSwitch" onclick="toggleReq('answer')"><span class="theme-switch-knob"></span></span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:14px;font-weight:600;">Require a proof link</span>
+      <span class="theme-switch" id="linkSwitch" onclick="toggleReq('link')"><span class="theme-switch-knob"></span></span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;">
+      <span style="font-size:14px;font-weight:600;">Require a photo upload</span>
+      <span class="theme-switch" id="photoSwitch" onclick="toggleReq('photo')"><span class="theme-switch-knob"></span></span>
+    </div>
+
+    <button onclick="goToStep(5)" style="margin-top:16px;">Next</button>
+  </div>
+
+  <div id="step5" class="kyc-step" style="display:none;">
+    <div class="verified-name-box" style="text-align:left;margin-bottom:20px;">
+      <div style="font-weight:800;font-size:15px;margin-bottom:10px;" id="reviewTitle">-</div>
+      <div style="font-size:13px;color:var(--text-dim);margin-bottom:10px;" id="reviewDesc">-</div>
+      <div style="font-size:12px;color:var(--text-dim);" id="reviewMeta">-</div>
+    </div>
+    <button id="publishBtn" onclick="publishTask()">Publish Task</button>
+  </div>
+
+  <div class="section-title" style="font-size:14px;margin-top:32px;">Existing Tasks</div>
   <div id="tasksList">
     <div class="skeleton" style="height:80px;margin-bottom:12px;"></div>
     <div class="skeleton" style="height:80px;margin-bottom:12px;"></div>
@@ -81,8 +155,23 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script type="module">
-  import { auth, db, doc, addDoc, updateDoc, deleteDoc, isAdmin, collection, getDocs } from './firebase-config.js?v=3';
+  import { auth, db, storage, doc, setDoc, updateDoc, deleteDoc, isAdmin, collection, getDocs } from './firebase-config.js?v=3';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  import { ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+  let currentStep = 1;
+  let taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  let imageFile = null;
+  let selectedTier = 'free';
+  let reqAnswerVal = false;
+  let reqLinkVal = false;
+  let reqPhotoVal = false;
+
+  window.toggleReq = function(type) {
+    if (type === 'answer') { reqAnswerVal = !reqAnswerVal; document.getElementById('answerSwitch').classList.toggle('on', reqAnswerVal); }
+    if (type === 'link') { reqLinkVal = !reqLinkVal; document.getElementById('linkSwitch').classList.toggle('on', reqLinkVal); }
+    if (type === 'photo') { reqPhotoVal = !reqPhotoVal; document.getElementById('photoSwitch').classList.toggle('on', reqPhotoVal); }
+  };
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.href = 'login.html'; return; }
@@ -92,12 +181,107 @@ if ('serviceWorker' in navigator) {
     document.body.classList.add('ready');
   });
 
+  window.goToStep = function(n) {
+    currentStep = n;
+    [1, 2, 3, 4, 5].forEach(function(i) {
+      document.getElementById('step' + i).style.display = i === n ? 'block' : 'none';
+      document.getElementById('dot' + i).classList.toggle('active', i === n);
+    });
+    if (n === 5) { fillReview(); }
+  };
+
+  window.headerBack = function() {
+    if (currentStep > 1 && currentStep < 5) {
+      goToStep(currentStep - 1);
+    } else {
+      window.location.href = 'admin-dashboard.html';
+    }
+  };
+
+  window.previewTaskImage = function(input) {
+    const file = input.files[0];
+    if (!file) return;
+    imageFile = file;
+    const url = URL.createObjectURL(file);
+    document.getElementById('imgPreview').src = url;
+    document.getElementById('imgPreviewWrap').style.display = 'block';
+    document.getElementById('imgBox').classList.add('has-file');
+    document.getElementById('imgTitle').textContent = 'Photo selected';
+    document.getElementById('imgHint').textContent = 'Tap to change';
+  };
+
+  window.selectTier = function(el) {
+    document.querySelectorAll('.id-type-option').forEach(function(o) { o.classList.remove('selected'); });
+    el.classList.add('selected');
+    selectedTier = el.dataset.value;
+  };
+
+  function fillReview() {
+    const title = document.getElementById('newTitle').value.trim();
+    const desc = document.getElementById('newDesc').value.trim();
+    const points = document.getElementById('newPoints').value.trim();
+    document.getElementById('reviewTitle').textContent = title || 'Untitled Task';
+    document.getElementById('reviewDesc').textContent = desc || 'No description';
+
+    const tierLabel = { free: 'Everyone', premium: 'Premium+', vip: 'VIP+', elite: 'Elite Only' }[selectedTier];
+    const reqParts = [];
+    if (reqAnswerVal) reqParts.push('Answer');
+    if (reqLinkVal) reqParts.push('Link');
+    if (reqPhotoVal) reqParts.push('Photo');
+    const reqText = reqParts.length ? reqParts.join(' + ') + ' required' : 'No submission needed';
+
+    document.getElementById('reviewMeta').textContent = '+' + (points || 0) + ' pts · ' + tierLabel + ' · ' + reqText;
+  }
+
+  window.publishTask = async function() {
+    const title = document.getElementById('newTitle').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    const link = document.getElementById('newLink').value.trim();
+    const pointsReward = parseInt(document.getElementById('newPoints').value, 10);
+    if (!title || !pointsReward) { toast('Title and points reward are required', 'error'); return; }
+    if (link && link.toLowerCase().includes('rancharm.com')) { toast('Destination link cannot point to rancharm.com', 'error'); return; }
+
+    const btn = document.getElementById('publishBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Publishing...';
+
+    try {
+      let imageUrl = '';
+      if (imageFile) {
+        const imgRef = ref(storage, 'tasks/' + taskId + '/image.jpg');
+        await uploadBytes(imgRef, imageFile);
+        imageUrl = await getDownloadURL(imgRef);
+      }
+
+      await setDoc(doc(db, "tasks", taskId), {
+        title: title,
+        description: description,
+        link: link,
+        imageUrl: imageUrl,
+        pointsReward: pointsReward,
+        requiredTier: selectedTier,
+        requireAnswer: reqAnswerVal,
+        requireLink: reqLinkVal,
+        requirePhoto: reqPhotoVal,
+        active: true,
+        createdAt: Date.now()
+      });
+
+      toast('Task published', 'success');
+      window.location.reload();
+    } catch (e) {
+      toast('Failed: ' + e.message, 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Publish Task';
+    }
+  };
+
   async function loadTasks() {
     const list = document.getElementById('tasksList');
     const snap = await getDocs(collection(db, "tasks"));
 
     if (snap.empty) {
-      list.innerHTML = '<div class="empty-note">No tasks yet — add one above.</div>';
+      list.innerHTML = '<div class="empty-note">No tasks yet.</div>';
       return;
     }
 
@@ -105,7 +289,8 @@ if ('serviceWorker' in navigator) {
     let i = 0;
     snap.forEach((docSnap) => {
       const task = docSnap.data();
-      const taskId = docSnap.id;
+      const tId = docSnap.id;
+      const tierLabel = { free: 'Everyone', premium: 'Premium+', vip: 'VIP+', elite: 'Elite Only' }[task.requiredTier] || 'Everyone';
 
       const item = document.createElement('div');
       item.className = 'task-card reveal';
@@ -114,47 +299,21 @@ if ('serviceWorker' in navigator) {
       item.innerHTML = `
         <div>
           <div class="task-title">${task.title}</div>
-          <div class="task-desc">${task.description || ''} · +${task.pointsReward} pts</div>
+          <div class="task-desc">${task.description || ''} · +${task.pointsReward} pts · ${tierLabel}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
-          <button class="btn-small" onclick="toggleActive('${taskId}', ${task.active}, this)">${task.active ? 'Active' : 'Inactive'}</button>
-          <button class="btn-small" style="background:#f43f5e;" onclick="removeTask('${taskId}', this)">Delete</button>
+          <button class="btn-small" onclick="toggleActive('${tId}', ${task.active}, this)">${task.active ? 'Active' : 'Inactive'}</button>
+          <button class="btn-small" style="background:#f43f5e;" onclick="removeTask('${tId}', this)">Delete</button>
         </div>
       `;
       list.appendChild(item);
     });
   }
 
-  window.addTask = async () => {
-    const title = document.getElementById('newTitle').value.trim();
-    const description = document.getElementById('newDesc').value.trim();
-    const pointsReward = parseInt(document.getElementById('newPoints').value, 10);
-
-    if (!title || !pointsReward) { toast('Title and points reward are required', 'error'); return; }
-
-    const btn = document.getElementById('addTaskBtn');
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Adding...';
-
-    try {
-      await addDoc(collection(db, "tasks"), { title, description, pointsReward, active: true });
-      document.getElementById('newTitle').value = '';
-      document.getElementById('newDesc').value = '';
-      document.getElementById('newPoints').value = '';
-      toast('Task added', 'success');
-      await loadTasks();
-    } catch (e) {
-      toast('Failed: ' + e.message, 'error');
-    } finally {
-      btn.disabled = false;
-      btn.innerHTML = 'Add Task';
-    }
-  };
-
-  window.toggleActive = async (taskId, current, btn) => {
+  window.toggleActive = async (tId, current, btn) => {
     btn.disabled = true;
     try {
-      await updateDoc(doc(db, "tasks", taskId), { active: !current });
+      await updateDoc(doc(db, "tasks", tId), { active: !current });
       await loadTasks();
     } catch (e) {
       toast('Failed: ' + e.message, 'error');
@@ -162,11 +321,11 @@ if ('serviceWorker' in navigator) {
     }
   };
 
-  window.removeTask = async (taskId, btn) => {
+  window.removeTask = async (tId, btn) => {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     try {
-      await deleteDoc(doc(db, "tasks", taskId));
+      await deleteDoc(doc(db, "tasks", tId));
       toast('Task deleted', 'success');
       await loadTasks();
     } catch (e) {

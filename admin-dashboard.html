@@ -78,6 +78,11 @@ if ('serviceWorker' in navigator) {
       Withdrawals
       <div id="withdrawalCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
     </a>
+    <a class="nav-tile reveal" style="animation-delay:0.15s" href="admin-task-submissions.html">
+      <i class="fa-solid fa-clipboard-check" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>
+      Task Submissions
+      <div id="taskSubCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
+    </a>
   </div>
 </div>
 
@@ -97,6 +102,9 @@ if ('serviceWorker' in navigator) {
 
     const pendingWithdrawalsSnap = await getDocs(query(collection(db, "withdrawals"), where("status", "==", "pending")));
     document.getElementById('withdrawalCount').textContent = pendingWithdrawalsSnap.size + ' pending';
+
+    const pendingTaskSubsSnap = await getDocs(query(collection(db, "taskSubmissions"), where("status", "==", "pending")));
+    document.getElementById('taskSubCount').textContent = pendingTaskSubsSnap.size + ' pending';
 
     document.body.classList.add('ready');
   });
