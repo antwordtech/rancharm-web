@@ -83,6 +83,11 @@ if ('serviceWorker' in navigator) {
       Task Submissions
       <div id="taskSubCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
     </a>
+    <a class="nav-tile reveal" style="animation-delay:0.2s" href="admin-users.html">
+      <i class="fa-solid fa-users" style="color:var(--brand);display:block;font-size:20px;margin-bottom:8px;"></i>
+      Manage Users
+      <div id="userTotalCount" style="font-size:11px;color:var(--text-dim);margin-top:4px;">Loading...</div>
+    </a>
   </div>
 </div>
 
@@ -105,6 +110,9 @@ if ('serviceWorker' in navigator) {
 
     const pendingTaskSubsSnap = await getDocs(query(collection(db, "taskSubmissions"), where("status", "==", "pending")));
     document.getElementById('taskSubCount').textContent = pendingTaskSubsSnap.size + ' pending';
+
+    const allUsersSnap = await getDocs(collection(db, "users"));
+    document.getElementById('userTotalCount').textContent = allUsersSnap.size + ' total';
 
     document.body.classList.add('ready');
   });
