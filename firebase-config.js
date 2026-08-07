@@ -5,7 +5,7 @@ import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstati
 
 const firebaseConfig = {
   apiKey: "AIzaSyDbEAloJNKfhVqP7mE6xCAHhIS_rC67Pgs",
-  authDomain: "rancharmtech.firebaseapp.com",
+  authDomain: "rancharm.com",
   projectId: "rancharmtech",
   storageBucket: "rancharmtech.firebasestorage.app",
   messagingSenderId: "281311441496",
