@@ -101,6 +101,7 @@ if ('serviceWorker' in navigator) {
   <a class="drawer-link" href="referrals.html"><i class="fa-solid fa-user-group"></i>Referrals</a>
   <a class="drawer-link" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
   <a class="drawer-link" href="leaderboard.html"><i class="fa-solid fa-ranking-star"></i>Leaderboard</a>
+  <a class="drawer-link" href="transactions.html"><i class="fa-solid fa-receipt"></i>Transactions</a>
   <a class="drawer-link" href="marketplace.html"><i class="fa-solid fa-fire"></i>Marketplace</a>
   <a class="drawer-link" href="subscription.html"><i class="fa-solid fa-crown"></i>Subscription</a>
 
@@ -165,7 +166,7 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script type="module">
-  import { auth, db, doc, updateDoc, increment, getUserProfile, ANIMALS, getTeamLevel } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, increment, addDoc, collection, getUserProfile, ANIMALS, getTeamLevel } from './firebase-config.js?v=3';
   import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   window.openDrawer = () => {
@@ -233,7 +234,7 @@ if ('serviceWorker' in navigator) {
     const feedBtn = document.getElementById('feedBtn');
     const today = await getServerDate();
     const fedToday = data.lastFedDate === today;
-    const adsRequired = (tierKey === 'cock') ? 20 : 5;
+    const adsRequired = (tierKey === 'cock') ? 30 : 10;
     const adsToday = (data.adsWatchedDate === today) ? (data.adsWatchedCount || 0) : 0;
     const isPaidSub = data.subscriptionTier && data.subscriptionTier !== 'free';
     document.getElementById('adsProgressText').textContent = adsToday + ' / ' + adsRequired + ' ads watched';
@@ -281,7 +282,14 @@ if ('serviceWorker' in navigator) {
 
       await Promise.all([
         updateDoc(userRef, { lastFedDate: today, totalProfit: increment(earnedPoints) }),
-        updateDoc(walletRef, { points: increment(earnedPoints), lastUpdated: Date.now() })
+        updateDoc(walletRef, { points: increment(earnedPoints), lastUpdated: Date.now() }),
+        addDoc(collection(db, "transactions"), {
+          uid: currentUid,
+          type: "feed",
+          amount: earnedPoints,
+          description: "Fed " + currentAnimal.name + (rankBonus > 0 ? " (+" + rankBonus + "% team bonus)" : ""),
+          createdAt: Date.now()
+        })
       ]);
       toast(`+${earnedPoints} points earned!` + (rankBonus > 0 ? ` (${rankBonus}% team bonus)` : ''), 'success');
       profileData.lastFedDate = today;

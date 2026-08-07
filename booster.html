@@ -287,6 +287,7 @@ if ('serviceWorker' in navigator) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: currentUser.uid,
+          idToken: await currentUser.getIdToken(),
           service_id: selectedService.id,
           service_name: selectedService.name,
           link: link,

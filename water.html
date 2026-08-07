@@ -202,6 +202,7 @@ window.addEventListener('unhandledrejection', function(e) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: currentUser.uid,
+          idToken: await currentUser.getIdToken(),
           meter: currentMeter,
           phone: currentPhone,
           amountGHS: amount,

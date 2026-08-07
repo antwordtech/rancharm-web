@@ -251,6 +251,7 @@ if ('serviceWorker' in navigator) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: currentUser.uid,
+          idToken: await currentUser.getIdToken(),
           amountGHS: amount,
           network: detectedNetwork,
           phone: phone

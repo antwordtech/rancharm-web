@@ -220,6 +220,7 @@ if ('serviceWorker' in navigator) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           uid: currentUser.uid,
+          idToken: await currentUser.getIdToken(),
           service: selectedService,
           account: currentAccount,
           amountGHS: amount,

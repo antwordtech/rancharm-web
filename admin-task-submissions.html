@@ -68,7 +68,7 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script type="module">
-  import { auth, db, doc, updateDoc, increment, isAdmin, getUserProfile, collection, query, where, getDocs } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, increment, addDoc, isAdmin, getUserProfile, collection, query, where, getDocs } from './firebase-config.js?v=3';
   import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   onAuthStateChanged(auth, async function(user) {
@@ -119,20 +119,27 @@ if ('serviceWorker' in navigator) {
         ${proofHtml}
         <div style="display:flex;gap:10px;margin-top:14px;">
           <button class="btn-danger" onclick="rejectSubmission('${subId}', this)">Reject</button>
-          <button onclick="approveSubmission('${subId}', '${sub.uid}', ${sub.pointsReward}, this)">Approve</button>
+          <button onclick="approveSubmission('${subId}', '${sub.uid}', ${sub.pointsReward}, '${sub.taskTitle}', this)">Approve</button>
         </div>
       `;
       list.appendChild(card);
     }
   }
 
-  window.approveSubmission = async function(subId, uid, pointsReward, btn) {
+  window.approveSubmission = async function(subId, uid, pointsReward, taskTitle, btn) {
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     try {
       await Promise.all([
         updateDoc(doc(db, "taskSubmissions", subId), { status: "approved" }),
-        updateDoc(doc(db, "wallets", uid), { points: increment(pointsReward) })
+        updateDoc(doc(db, "wallets", uid), { points: increment(pointsReward) }),
+        addDoc(collection(db, "transactions"), {
+          uid: uid,
+          type: "task_reward",
+          amount: pointsReward,
+          description: "Task approved: " + taskTitle,
+          createdAt: Date.now()
+        })
       ]);
       toast('Approved and credited', 'success');
       await loadSubmissions();

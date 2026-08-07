@@ -76,7 +76,7 @@ if ('serviceWorker' in navigator) {
 </div>
 
 <script type="module">
-  import { auth, db, doc, updateDoc, increment, isAdmin, ANIMALS, collection, getDocs } from './firebase-config.js?v=3';
+  import { auth, db, doc, updateDoc, increment, addDoc, isAdmin, ANIMALS, collection, getDocs } from './firebase-config.js?v=3';
   import { onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const WORKER_URL = 'https://rancharm-worker.antwordtech.workers.dev';
@@ -160,7 +160,16 @@ if ('serviceWorker' in navigator) {
 
     btn.disabled = true;
     try {
-      await updateDoc(doc(db, "wallets", uid), { points: increment(sign * amount) });
+      await Promise.all([
+        updateDoc(doc(db, "wallets", uid), { points: increment(sign * amount) }),
+        addDoc(collection(db, "transactions"), {
+          uid: uid,
+          type: "admin_adjustment",
+          amount: sign * amount,
+          description: sign > 0 ? "Admin added points" : "Admin deducted points",
+          createdAt: Date.now()
+        })
+      ]);
       toast(sign > 0 ? 'Points added' : 'Points deducted', 'success');
       await loadUsers();
     } catch (e) {
